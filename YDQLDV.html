@@ -132,28 +132,29 @@ function renderChiBoList() {
     }
   });
 }
-
+<script>
 function addChiBo() {
   const name = document.getElementById("newChiBo").value.trim();
   if (!name) return alert("Nhập tên chi bộ.");
   const ref = db.ref('chibo_data/' + name);
-  ref.once('value').then(snapshot => {
-    if (snapshot.exists()) {
-      alert("Chi bộ đã tồn tại.");
-    } else {
-      ref.set([]).then(() => {
-        renderChiBoList();
-        document.getElementById("newChiBo").value = '';
-      }).catch(err => {
-        console.error("Lỗi khi ghi vào Firebase:", err);
-        alert("Không ghi được dữ liệu. Xem console.");
-      });
-    }
-  });
-}
-function deleteChiBo(name) {
-  if (!confirm(`Xóa chi bộ "${name}"?`)) return;
-  db.ref('chibo_data/' + name).remove().then(renderChiBoList);
+  ref.once('value')
+    .then(snapshot => {
+      if (snapshot.exists()) {
+        alert("Chi bộ đã tồn tại.");
+      } else {
+        ref.set([]).then(() => {
+          renderChiBoList();
+          document.getElementById("newChiBo").value = '';
+        }).catch(err => {
+          console.error("Lỗi khi ghi dữ liệu:", err);
+          alert("Không ghi được dữ liệu. Xem console.");
+        });
+      }
+    })
+    .catch(error => {
+      console.error("Lỗi khi kiểm tra tồn tại:", error);
+      alert("Không kiểm tra được chi bộ. Xem console.");
+    });
 }
 </script>
 </body>
