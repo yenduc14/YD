@@ -2,9 +2,9 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Quản lý Đảng viên</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -25,115 +25,109 @@
   </style>
 </head>
 <body>
-<div style="display: flex; justify-content: center; align-items: center; position: relative;">
-  <img src="codang.png" style="position: absolute; right: 20px; top: 0; height: 80px; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" />
-  <div style="text-align: center; color: #007bff;">
-    <h1 style="margin-bottom: 0;">ĐẢNG CỘNG SẢN VIỆT NAM</h1>
-    <h2 style="margin-top: 5px;">ĐẢNG BỘ PHƯỚNG YÊN ĐỨC</h2>
+  <div class="container">
+    <div id="loginSection">
+      <h2>Đăng nhập</h2>
+      <input id="email" placeholder="Email" />
+      <input id="password" type="password" placeholder="Mật khẩu" />
+      <button class="btn" onclick="login()">Đăng nhập</button>
+    </div>
+
+    <div id="mainSection" class="hidden">
+      <h2>Danh sách Chi bộ</h2>
+      <button class="btn" id="logoutBtn" onclick="logout()">Đăng xuất</button><br><br>
+      <input id="newChiBo" placeholder="Tên chi bộ mới" />
+      <button class="btn" onclick="addChiBo()">➕ Thêm Chi bộ</button>
+      <ul id="chiBoList"></ul>
+    </div>
   </div>
-</div>
-<div class="container">
-  <div id="loginSection">
-    <h2>Đăng nhập</h2>
-    <input id="email" placeholder="Email" />
-    <input id="password" type="password" placeholder="Mật khẩu" />
-    <button class="btn" onclick="login()">Đăng nhập</button>
-  </div>
 
-  <div id="mainSection" class="hidden">
-    <h2>Danh sách Chi bộ</h2>
-    <button class="btn" id="logoutBtn" onclick="logout()">Đăng xuất</button><br><br>
-    <input id="newChiBo" placeholder="Tên chi bộ mới" />
-    <button class="btn" onclick="addChiBo()">➕ Thêm Chi bộ</button>
-    <ul id="chiBoList"></ul>
-  </div>
-</div>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBm2sbTD9yOOoySCkTTw8dQbTx1JKvFX6E",
+      authDomain: "quanlydangvien-856fe.firebaseapp.com",
+      databaseURL: "https://quanlydangvien-856fe-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "quanlydangvien-856fe",
+      storageBucket: "quanlydangvien-856fe.appspot.com",
+      messagingSenderId: "610889754602",
+      appId: "1:610889754602:web:089c480d64712707ec7493"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBm2sbTD9yOOoySCkTTw8dQbTx1JKvFX6E",
-  authDomain: "quanlydangvien-856fe.firebaseapp.com",
-  databaseURL: "https://quanlydangvien-856fe-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "quanlydangvien-856fe",
-  storageBucket: "quanlydangvien-856fe.appspot.com",
-  messagingSenderId: "610889754602",
-  appId: "1:610889754602:web:089c480d64712707ec7493",
-  measurementId: "G-H59ZT6MV4Y"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+    const USERS_KEY = 'users';
+    let currentUser = null;
 
-const USERS_KEY = 'users';
-let currentUser = null;
-let currentChiBo = null;
+    const defaultUsers = [
+      { email: 'admin@gmail.com', password: 'admin123', role: 'admin' },
+      { email: 'user@gmail.com', password: 'user123', role: 'user' }
+    ];
 
-const defaultUsers = [
-  { email: 'admin@gmail.com', password: 'admin123', role: 'admin' },
-  { email: 'user@gmail.com', password: 'user123', role: 'user' }
-];
+    window.onload = () => {
+      if (!localStorage.getItem(USERS_KEY)) {
+        localStorage.setItem(USERS_KEY, JSON.stringify(defaultUsers));
+      }
+    };
 
-window.onload = () => {
-  if (!localStorage.getItem(USERS_KEY)) {
-    localStorage.setItem(USERS_KEY, JSON.stringify(defaultUsers));
-  }
-};
-
-function login() {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
-  const found = users.find(u => u.email === email && u.password === password);
-  if (found) {
-    currentUser = found;
-    document.getElementById("loginSection").classList.add("hidden");
-    document.getElementById("mainSection").classList.remove("hidden");
-    renderChiBoList();
-  } else {
-    alert("Sai tài khoản hoặc mật khẩu.");
-  }
-}
-
-function logout() {
-  currentUser = null;
-  currentChiBo = null;
-  document.getElementById("mainSection").classList.add("hidden");
-  document.getElementById("loginSection").classList.remove("hidden");
-}
-
-function renderChiBoList() {
-  const ul = document.getElementById("chiBoList");
-  ul.innerHTML = '';
-  db.ref('chibo_data').once('value').then(snapshot => {
-    const data = snapshot.val() || {};
-    for (let name in data) {
-      const li = document.createElement("li");
-      li.innerHTML = `<strong>${name}</strong> <button class="action-btn" onclick="openChiBo('${name}')">Mở</button> ${currentUser?.role === 'admin' ? `<button class="action-btn delete-btn" onclick="deleteChiBo('${name}')">Ẩn</button>` : ''}`;
-      ul.appendChild(li);
-    }
-  });
-}
-
-function addChiBo() {
-  const name = document.getElementById("newChiBo").value.trim();
-  if (!name) return alert("Nhập tên chi bộ.");
-  const ref = db.ref('chibo_data/' + name);
-  ref.once('value').then(snapshot => {
-    if (snapshot.exists()) {
-      alert("Chi bộ đã tồn tại.");
-    } else {
-      ref.set([]).then(() => {
+    function login() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+      const found = users.find(u => u.email === email && u.password === password);
+      if (found) {
+        currentUser = found;
+        document.getElementById("loginSection").classList.add("hidden");
+        document.getElementById("mainSection").classList.remove("hidden");
         renderChiBoList();
-        document.getElementById("newChiBo").value = '';
-      }).catch(err => {
-        console.error("Lỗi khi ghi dữ liệu:", err);
-        alert("Không ghi được dữ liệu.");
+      } else {
+        alert("Sai tài khoản hoặc mật khẩu.");
+      }
+    }
+
+    function logout() {
+      currentUser = null;
+      document.getElementById("mainSection").classList.add("hidden");
+      document.getElementById("loginSection").classList.remove("hidden");
+    }
+
+    function renderChiBoList() {
+      const ul = document.getElementById("chiBoList");
+      ul.innerHTML = '';
+      db.ref('chibo_data').once('value').then(snapshot => {
+        const data = snapshot.val() || {};
+        for (let name in data) {
+          const li = document.createElement("li");
+          li.innerHTML = `<strong>${name}</strong>`;
+          ul.appendChild(li);
+        }
       });
     }
-  }).catch(err => {
-    console.error("Lỗi khi kiểm tra tồn tại:", err);
-    alert("Không kiểm tra được chi bộ.");
-  });
-}
-</script>
+
+    function addChiBo() {
+      const name = document.getElementById("newChiBo").value.trim();
+      if (!name) return alert("Nhập tên chi bộ.");
+      const ref = db.ref('chibo_data/' + name);
+      ref.once('value')
+        .then(snapshot => {
+          if (snapshot.exists()) {
+            alert("Chi bộ đã tồn tại.");
+          } else {
+            ref.set([])
+              .then(() => {
+                renderChiBoList();
+                document.getElementById("newChiBo").value = '';
+              })
+              .catch(err => {
+                console.error("Lỗi khi ghi dữ liệu:", err);
+                alert("Không ghi được dữ liệu. Xem console.");
+              });
+          }
+        })
+        .catch(error => {
+          console.error("Lỗi khi kiểm tra tồn tại:", error);
+          alert("Không kiểm tra được chi bộ. Xem console.");
+        });
+    }
+  </script>
 </body>
 </html>
