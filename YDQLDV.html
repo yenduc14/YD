@@ -47,26 +47,6 @@
     <button class="btn" onclick="addChiBo()">➕ Thêm Chi bộ</button>
     <ul id="chiBoList"></ul>
   </div>
-
-  <div id="chiBoDetail" class="hidden">
-    <h2 id="chiBoTitle"></h2>
-    <button class="btn" onclick="backToList()">← Quay lại</button>
-    <input id="searchInput" placeholder="🔍 Tìm kiếm..." oninput="renderTable()"/>
-    <button class="btn" onclick="document.getElementById('excelFile').click()">📥 Nhập Excel</button>
-    <input type="file" id="excelFile" accept=".xlsx,.xls" class="hidden" />
-    <button class="btn" onclick="exportExcel()">📤 Xuất Excel</button>
-    <table>
-      <thead>
-        <tr>
-          <th>STT</th><th>Họ và tên</th><th>Giới tính</th><th>Ngày sinh</th>
-          <th>Ngày vào Đảng</th><th>Chính thức</th><th>Tuổi Đảng</th>
-          <th>Huy hiệu</th><th>Ghi chú</th><th>Thao tác</th>
-        </tr>
-      </thead>
-      <tbody id="dvTableBody"></tbody>
-    </table>
-    <button class="btn" onclick="addDangVien()">➕ Thêm Đảng viên</button>
-  </div>
 </div>
 
 <script>
@@ -77,15 +57,14 @@ const firebaseConfig = {
   projectId: "quanlydangvien-856fe",
   storageBucket: "quanlydangvien-856fe.appspot.com",
   messagingSenderId: "610889754602",
-  appId: "1:610889754602:web:089c480d64712707ec7493",
-  measurementId: "G-H59ZT6MV4Y"
+  appId: "1:610889754602:web:089c480d64712707ec7493"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 const USERS_KEY = 'users';
 let currentUser = null;
-let currentChiBo = null;
 
 const defaultUsers = [
   { email: 'admin@gmail.com', password: 'admin123', role: 'admin' },
@@ -115,9 +94,7 @@ function login() {
 
 function logout() {
   currentUser = null;
-  currentChiBo = null;
   document.getElementById("mainSection").classList.add("hidden");
-  document.getElementById("chiBoDetail").classList.add("hidden");
   document.getElementById("loginSection").classList.remove("hidden");
 }
 
@@ -128,8 +105,7 @@ function renderChiBoList() {
     const data = snapshot.val() || {};
     for (let name in data) {
       const li = document.createElement("li");
-      li.innerHTML = `<strong>${name}</strong> <button class="action-btn" onclick="openChiBo('${name}')">Mở</button>` +
-        (currentUser?.role === 'admin' ? ` <button class="action-btn delete-btn" onclick="deleteChiBo('${name}')">Xoá</button>` : '');
+      li.innerHTML = `<strong>${name}</strong>`;
       ul.appendChild(li);
     }
   });
@@ -139,27 +115,23 @@ function addChiBo() {
   const name = document.getElementById("newChiBo").value.trim();
   if (!name) return alert("Nhập tên chi bộ.");
   const ref = db.ref('chibo_data/' + name);
-  ref.once('value')
-    .then(snapshot => {
-      if (snapshot.exists()) {
-        alert("Chi bộ đã tồn tại.");
-      } else {
-        ref.set([]).then(() => {
-          renderChiBoList();
-          document.getElementById("newChiBo").value = '';
-        }).catch(err => {
-          console.error("Lỗi khi ghi dữ liệu:", err);
-          alert("Không ghi được dữ liệu. Xem console.");
-        });
-      }
-    })
-    .catch(error => {
-      console.error("Lỗi khi kiểm tra tồn tại:", error);
-      alert("Không kiểm tra được chi bộ. Xem console.");
-    });
+  ref.once('value').then(snapshot => {
+    if (snapshot.exists()) {
+      alert("Chi bộ đã tồn tại.");
+    } else {
+      ref.set([]).then(() => {
+        renderChiBoList();
+        document.getElementById("newChiBo").value = '';
+      }).catch(err => {
+        console.error("Lỗi khi ghi dữ liệu:", err);
+        alert("Không ghi được dữ liệu. Xem console.");
+      });
+    }
+  }).catch(error => {
+    console.error("Lỗi khi kiểm tra tồn tại:", error);
+    alert("Không kiểm tra được chi bộ. Xem console.");
+  });
 }
-
-window.addChiBo = addChiBo; // Đảm bảo hàm gọi được từ HTML
 </script>
 </body>
 </html>
