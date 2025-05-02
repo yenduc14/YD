@@ -77,7 +77,8 @@ const firebaseConfig = {
   projectId: "quanlydangvien-856fe",
   storageBucket: "quanlydangvien-856fe.appspot.com",
   messagingSenderId: "610889754602",
-  appId: "1:610889754602:web:089c480d64712707ec7493"
+  appId: "1:610889754602:web:089c480d64712707ec7493",
+  measurementId: "G-H59ZT6MV4Y"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
@@ -127,12 +128,13 @@ function renderChiBoList() {
     const data = snapshot.val() || {};
     for (let name in data) {
       const li = document.createElement("li");
-      li.innerHTML = `<strong>${name}</strong> <button class="action-btn" onclick="openChiBo('${name}')">Mở</button> ${currentUser?.role === 'admin' ? `<button class="action-btn delete-btn" onclick="deleteChiBo('${name}')">Xoá</button>` : ''}`;
+      li.innerHTML = `<strong>${name}</strong> <button class="action-btn" onclick="openChiBo('${name}')">Mở</button>` +
+        (currentUser?.role === 'admin' ? ` <button class="action-btn delete-btn" onclick="deleteChiBo('${name}')">Xoá</button>` : '');
       ul.appendChild(li);
     }
   });
 }
-<script>
+
 function addChiBo() {
   const name = document.getElementById("newChiBo").value.trim();
   if (!name) return alert("Nhập tên chi bộ.");
@@ -156,6 +158,8 @@ function addChiBo() {
       alert("Không kiểm tra được chi bộ. Xem console.");
     });
 }
+
+window.addChiBo = addChiBo; // Đảm bảo hàm gọi được từ HTML
 </script>
 </body>
 </html>
