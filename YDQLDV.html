@@ -137,27 +137,26 @@ function renderChiBoList() {
 function addChiBo() {
   const name = document.getElementById("newChiBo").value.trim();
   if (!name) return alert("Nhập tên chi bộ.");
-  db.ref('chibo_data').once('value').then(snapshot => {
-    const data = snapshot.val() || {};
-    if (data[name]) return alert("Chi bộ đã tồn tại.");
-    data[name] = [];
-    db.ref('chibo_data').set(data).then(() => {
-      renderChiBoList();
-      document.getElementById("newChiBo").value = '';
-    });
+  const ref = db.ref('chibo_data/' + name);
+  ref.once('value').then(snapshot => {
+    if (snapshot.exists()) {
+      alert("Chi bộ đã tồn tại.");
+    } else {
+      ref.set([]).then(() => {
+        renderChiBoList();
+        document.getElementById("newChiBo").value = '';
+      }).catch(err => {
+        console.error("Lỗi khi ghi vào Firebase:", err);
+        alert("Không ghi được dữ liệu. Xem console.");
+      });
+    }
   });
 }
 
 function deleteChiBo(name) {
   if (!confirm(`Xóa chi bộ "${name}"?`)) return;
-  db.ref('chibo_data').once('value').then(snapshot => {
-    const data = snapshot.val() || {};
-    delete data[name];
-    db.ref('chibo_data').set(data).then(renderChiBoList);
-  });
+  db.ref('chibo_data/' + name).remove().then(renderChiBoList);
 }
-
-// Các hàm còn lại như openChiBo, renderTable, addDangVien, editDV, deleteDV, exportExcel... bạn có thể cập nhật theo hướng Firebase tương tự
 </script>
 </body>
 </html>
