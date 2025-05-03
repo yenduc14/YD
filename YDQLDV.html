@@ -25,6 +25,16 @@
   </style>
 </head>
 <body>
+<!-- Tiêu đề + Cờ Đảng -->
+<div style="display: flex; justify-content: center; align-items: center; position: relative;">
+  <img src="codang.png" 
+       style="position: absolute; right: 20px; top: 0; height: 80px; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" />
+  <div style="text-align: center; color: #007bff;">
+    <h1 style="margin-bottom: 0;">&#272;&#1ea2;NG CỔNG SẢN VIỆT NAM</h1>
+    <h2 style="margin-top: 5px;">&#272;&#1ea2;NG BỘ PHƯỚNG YÊN ĐỨC</h2>
+  </div>
+</div>
+
 <div class="container">
   <div id="loginSection">
     <h2>Đăng nhập</h2>
@@ -45,9 +55,9 @@
     <h2 id="chiBoTitle"></h2>
     <button class="btn" onclick="backToList()">← Quay lại</button>
     <input id="searchInput" placeholder="🔍 Tìm kiếm..." oninput="renderTable()"/>
-    <button class="btn" onclick="document.getElementById('excelFile').click()">📥 Nhập Excel</button>
+    <button class="btn" onclick="document.getElementById('excelFile').click()">📅 Nhập Excel</button>
     <input type="file" id="excelFile" accept=".xlsx,.xls" class="hidden" />
-    <button class="btn" onclick="exportExcel()">📤 Xuất Excel</button>
+    <button class="btn" onclick="exportExcel()">📄 Xuất Excel</button>
     <table>
       <thead>
         <tr>
@@ -61,7 +71,6 @@
     <button class="btn" onclick="addDangVien()">➕ Thêm Đảng viên</button>
   </div>
 </div>
-
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyBm2sbTD9yOOoySCkTTw8dQbTx1JKvFX6E",
@@ -120,7 +129,7 @@ function renderChiBoList() {
     const data = snapshot.val() || {};
     for (let name in data) {
       const li = document.createElement("li");
-      li.innerHTML = \`<strong>\${name}</strong> <button class="action-btn" onclick="openChiBo('\${name}')">Mở</button> \${currentUser?.role === 'admin' ? \`<button class="action-btn delete-btn" onclick="deleteChiBo('\${name}')">Xoá</button>\` : ''}\`;
+      li.innerHTML = `<strong>${name}</strong> <button class="action-btn" onclick="openChiBo('${name}')">Mở</button> ${currentUser?.role === 'admin' ? `<button class="action-btn delete-btn" onclick="deleteChiBo('${name}')">Xoá</button>` : ''}`;
       ul.appendChild(li);
     }
   });
@@ -129,15 +138,15 @@ function renderChiBoList() {
 function addChiBo() {
   const name = document.getElementById("newChiBo").value.trim();
   if (!name) return alert("Nhập tên chi bộ.");
-  db.ref(\`chibo_data/\${name}\`).set([]).then(() => {
+  db.ref(`chibo_data/${name}`).set([]).then(() => {
     renderChiBoList();
     document.getElementById("newChiBo").value = '';
   });
 }
 
 function deleteChiBo(name) {
-  if (!confirm(\`Xóa chi bộ "\${name}"?\`)) return;
-  db.ref(\`chibo_data/\${name}\`).remove().then(renderChiBoList);
+  if (!confirm(`Xóa chi bộ "${name}"?`)) return;
+  db.ref(`chibo_data/${name}`).remove().then(renderChiBoList);
 }
 
 function openChiBo(name) {
@@ -157,20 +166,20 @@ function backToList() {
 function renderTable() {
   const tbody = document.getElementById("dvTableBody");
   const keyword = document.getElementById("searchInput").value.toLowerCase();
-  db.ref(\`chibo_data/\${currentChiBo}\`).once('value').then(snapshot => {
+  db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
     tbody.innerHTML = '';
     list.forEach((dv, index) => {
       if (!dv.name.toLowerCase().includes(keyword)) return;
       const tr = document.createElement("tr");
-      tr.innerHTML = \`
-        <td>\${index + 1}</td><td>\${dv.name}</td><td>\${dv.gender}</td><td>\${dv.dob}</td>
-        <td>\${dv.ngayVaoDang}</td><td>\${dv.chinhThuc}</td><td>\${calcAge(dv.ngayVaoDang)}</td>
-        <td>\${dv.huyHieu || ''}</td><td>\${dv.note || ''}</td>
+      tr.innerHTML = `
+        <td>${index + 1}</td><td>${dv.name}</td><td>${dv.gender}</td><td>${dv.dob}</td>
+        <td>${dv.ngayVaoDang}</td><td>${dv.chinhThuc}</td><td>${calcAge(dv.ngayVaoDang)}</td>
+        <td>${dv.huyHieu || ''}</td><td>${dv.note || ''}</td>
         <td>
-          <button class="action-btn" onclick="editDV(\${index})">✏️</button>
-          <button class="action-btn delete-btn" onclick="deleteDV(\${index})">🗑️</button>
-        </td>\`;
+          <button class="action-btn" onclick="editDV(${index})">✏️</button>
+          <button class="action-btn delete-btn" onclick="deleteDV(${index})">🗑️</button>
+        </td>`;
       tbody.appendChild(tr);
     });
   });
@@ -180,62 +189,31 @@ function addDangVien() {
   const name = prompt("Tên đảng viên:");
   if (!name) return;
   const newDV = { name, gender: '', dob: '', ngayVaoDang: '', chinhThuc: '', huyHieu: '', note: '' };
-  db.ref(\`chibo_data/\${currentChiBo}\`).once('value').then(snapshot => {
+  db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
     list.push(newDV);
-    db.ref(\`chibo_data/\${currentChiBo}\`).set(list).then(renderTable);
+    db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable);
   });
 }
 
 function editDV(index) {
   const newNote = prompt("Cập nhật ghi chú:");
   if (newNote === null) return;
-  db.ref(\`chibo_data/\${currentChiBo}\`).once('value').then(snapshot => {
+  db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
     list[index].note = newNote;
-    db.ref(\`chibo_data/\${currentChiBo}\`).set(list).then(renderTable);
+    db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable);
   });
 }
 
 function deleteDV(index) {
   if (!confirm("Xoá đảng viên này?")) return;
-  db.ref(\`chibo_data/\${currentChiBo}\`).once('value').then(snapshot => {
+  db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
     list.splice(index, 1);
-    db.ref(\`chibo_data/\${currentChiBo}\`).set(list).then(renderTable);
+    db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable);
   });
 }
-
-function exportExcel() {
-  db.ref(\`chibo_data/\${currentChiBo}\`).once('value').then(snapshot => {
-    const list = snapshot.val() || [];
-    const rows = [["STT", "Họ và tên", "Giới tính", "Ngày sinh", "Ngày vào Đảng", "Chính thức", "Tuổi Đảng", "Huy hiệu", "Ghi chú"]];
-    list.forEach((dv, index) => {
-      rows.push([index+1, dv.name, dv.gender, dv.dob, dv.ngayVaoDang, dv.chinhThuc, calcAge(dv.ngayVaoDang), dv.huyHieu, dv.note]);
-    });
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "ChiBo");
-    XLSX.writeFile(wb, "danhsach_dangvien.xlsx");
-  });
-}
-
-document.getElementById("excelFile").addEventListener("change", function(e) {
-  const file = e.target.files[0];
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const data = new Uint8Array(e.target.result);
-    const workbook = XLSX.read(data, {type: 'array'});
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet, {header: 1});
-    const convert = rows.slice(1).map(r => ({
-      name: r[1] || '', gender: r[2] || '', dob: r[3] || '',
-      ngayVaoDang: r[4] || '', chinhThuc: r[5] || '', huyHieu: r[7] || '', note: r[8] || ''
-    }));
-    db.ref(\`chibo_data/\${currentChiBo}\`).set(convert).then(renderTable);
-  };
-  reader.readAsArrayBuffer(file);
-});
 
 function calcAge(dateStr) {
   if (!dateStr) return '';
@@ -248,7 +226,7 @@ function calcAge(dateStr) {
   let days = now.getDate() - from.getDate();
   if (days < 0) { days += 30; months--; }
   if (months < 0) { months += 12; years--; }
-  return \`\${years} năm \${months} tháng \${days} ngày\`;
+  return `${years} năm ${months} tháng ${days} ngày`;
 }
 </script>
 </body>
