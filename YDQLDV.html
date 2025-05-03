@@ -1,133 +1,142 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
   <title>Quản lý Đảng viên</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <style>
-    body { font-family: Arial; background: #f4f4f4; margin: 0; padding: 0; }
-    .container { max-width: 1000px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; }
-    h2 { text-align: center; color: #007bff; }
-    input, select, button { margin: 5px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-    .btn { background: #007bff; color: white; cursor: pointer; border: none; }
-    .btn:hover { background: #0056b3; }
-    .hidden { display: none; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background-color: #007bff; color: white; }
-    #logoutBtn { float: right; background: red; }
-    .action-btn { background: #28a745; color: white; border: none; padding: 5px; margin: 2px; border-radius: 4px; cursor: pointer; }
-    .delete-btn { background: red; }
-  </style>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 </head>
 <body>
-  <div class="container">
-    <div id="loginSection">
-      <h2>Đăng nhập</h2>
-      <input id="email" placeholder="Email" />
-      <input id="password" type="password" placeholder="Mật khẩu" />
-      <button class="btn" onclick="login()">Đăng nhập</button>
-    </div>
+  <div id="loginSection">
+    <h2>Đăng nhập</h2>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Mật khẩu">
+    <button onclick="login()">Đăng nhập</button>
+  </div>
 
-    <div id="mainSection" class="hidden">
-      <h2>Danh sách Chi bộ</h2>
-      <button class="btn" id="logoutBtn" onclick="logout()">Đăng xuất</button><br><br>
-      <input id="newChiBo" placeholder="Tên chi bộ mới" />
-      <button class="btn" onclick="addChiBo()">➕ Thêm Chi bộ</button>
-      <ul id="chiBoList"></ul>
-    </div>
+  <div id="mainSection" class="hidden">
+    <h2>Danh sách Chi bộ</h2>
+    <button onclick="logout()" style="background:red;color:white">Đăng xuất</button><br><br>
+    <input type="text" id="newChiBo" placeholder="Tên chi bộ mới">
+    <button onclick="addChiBo()">+ Thêm Chi bộ</button>
+    <ul id="chiBoList"></ul>
   </div>
 
   <script>
+    // Cấu hình Firebase
     const firebaseConfig = {
-      apiKey: "AIzaSyBm2sbTD9yOOoySCkTTw8dQbTx1JKvFX6E",
+      apiKey: "AIzaSyBGdvl-LQA0HQx8aG0LNSGkHYqXcLxHyxg",
       authDomain: "quanlydangvien-856fe.firebaseapp.com",
       databaseURL: "https://quanlydangvien-856fe-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "quanlydangvien-856fe",
       storageBucket: "quanlydangvien-856fe.appspot.com",
-      messagingSenderId: "610889754602",
-      appId: "1:610889754602:web:089c480d64712707ec7493"
+      messagingSenderId: "659585276265",
+      appId: "1:659585276265:web:5a810c927259f22507b03d"
     };
+
+    // Khởi tạo Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const USERS_KEY = 'users';
     let currentUser = null;
 
-    const defaultUsers = [
-      { email: 'admin@gmail.com', password: 'admin123', role: 'admin' },
-      { email: 'user@gmail.com', password: 'user123', role: 'user' }
-    ];
-
-    window.onload = () => {
-      if (!localStorage.getItem(USERS_KEY)) {
-        localStorage.setItem(USERS_KEY, JSON.stringify(defaultUsers));
-      }
-    };
-
+    // Đăng nhập
     function login() {
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
-      const users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
-      const found = users.find(u => u.email === email && u.password === password);
-      if (found) {
-        currentUser = found;
-        document.getElementById("loginSection").classList.add("hidden");
-        document.getElementById("mainSection").classList.remove("hidden");
-        renderChiBoList();
-      } else {
-        alert("Sai tài khoản hoặc mật khẩu.");
+      if (!email || !password) {
+        alert("Vui lòng nhập đầy đủ email và mật khẩu.");
+        return;
       }
+      currentUser = { email, password, role: "admin" }; // tạm thời hardcode
+      document.getElementById("loginSection").style.display = "none";
+      document.getElementById("mainSection").style.display = "block";
+      renderChiBoList();
     }
 
     function logout() {
       currentUser = null;
-      document.getElementById("mainSection").classList.add("hidden");
-      document.getElementById("loginSection").classList.remove("hidden");
+      document.getElementById("mainSection").style.display = "none";
+      document.getElementById("loginSection").style.display = "block";
     }
 
-    function renderChiBoList() {
-      const ul = document.getElementById("chiBoList");
-      ul.innerHTML = '';
-      db.ref('chibo_data').once('value').then(snapshot => {
-        const data = snapshot.val() || {};
-        for (let name in data) {
-          const li = document.createElement("li");
-          li.innerHTML = `<strong>${name}</strong>`;
-          ul.appendChild(li);
-        }
-      });
-    }
-
+    // Thêm chi bộ
     function addChiBo() {
       const name = document.getElementById("newChiBo").value.trim();
-      if (!name) return alert("Nhập tên chi bộ.");
-      const ref = db.ref('chibo_data/' + name);
-      ref.once('value')
+      if (!name) {
+        alert("Vui lòng nhập tên chi bộ.");
+        return;
+      }
+
+      const ref = db.ref("chibo_data/" + name);
+      ref.once("value")
         .then(snapshot => {
           if (snapshot.exists()) {
             alert("Chi bộ đã tồn tại.");
           } else {
-            ref.set([])
+            ref.set({ createdAt: new Date().toISOString() })
               .then(() => {
+                document.getElementById("newChiBo").value = "";
                 renderChiBoList();
-                document.getElementById("newChiBo").value = '';
               })
               .catch(err => {
-                console.error("Lỗi khi ghi dữ liệu:", err);
-                alert("Không ghi được dữ liệu. Xem console.");
+                console.error("Lỗi khi thêm chi bộ:", err);
+                alert("Lỗi khi thêm chi bộ. Xem console.");
               });
           }
         })
-        .catch(error => {
-          console.error("Lỗi khi kiểm tra tồn tại:", error);
-          alert("Không kiểm tra được chi bộ. Xem console.");
+        .catch(err => {
+          console.error("Lỗi kiểm tra chi bộ:", err);
+          alert("Lỗi kiểm tra chi bộ. Xem console.");
+        });
+    }
+
+    // Hiển thị danh sách chi bộ
+    function renderChiBoList() {
+      const list = document.getElementById("chiBoList");
+      list.innerHTML = "";
+      db.ref("chibo_data").once("value")
+        .then(snapshot => {
+          snapshot.forEach(child => {
+            const li = document.createElement("li");
+            li.textContent = child.key;
+            list.appendChild(li);
+          });
+        })
+        .catch(err => {
+          console.error("Lỗi khi đọc danh sách:", err);
         });
     }
   </script>
+
+  <style>
+    body {
+      font-family: Arial;
+      padding: 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    input {
+      padding: 5px;
+      margin: 5px;
+    }
+
+    button {
+      padding: 5px 10px;
+      margin: 5px;
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    ul {
+      margin-top: 10px;
+    }
+  </style>
 </body>
 </html>
