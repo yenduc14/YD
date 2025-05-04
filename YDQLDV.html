@@ -146,7 +146,7 @@ function renderChiBoList() {
 function addChiBo() {
   const name = document.getElementById("newChiBo").value.trim();
   if (!name) return alert("Nhập tên chi bộ.");
-  db.ref(`chibo_data/${name}`).set([]).then(() => {
+  db.ref(`chibo_data/${name}`).set({}).then(() => {
     renderChiBoList();
     document.getElementById("newChiBo").value = '';
   }).catch(err => {
