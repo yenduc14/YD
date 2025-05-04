@@ -127,12 +127,19 @@ function renderChiBoList() {
   const ul = document.getElementById("chiBoList");
   ul.innerHTML = '';
   db.ref('chibo_data').once('value').then(snapshot => {
-    const data = snapshot.val() || {};
-    for (let name in data) {
-      const li = document.createElement("li");
-      li.innerHTML = `<strong>${name}</strong> <button class="action-btn" onclick="openChiBo('${name}')">Mở</button> ${currentUser?.role === 'admin' ? `<button class="action-btn delete-btn" onclick="deleteChiBo('${name}')">Xoá</button>` : ''}`;
-      ul.appendChild(li);
+    const data = snapshot.val();
+    if (!data || typeof data !== 'object') {
+      console.warn("Dữ liệu chi bộ không đúng định dạng object. Đang reset lại...");
+      db.ref('chibo_data').set({});
+      return;
     }
+    Object.keys(data).forEach(name => {
+      const li = document.createElement("li");
+      li.innerHTML = `<strong>${name}</strong> 
+        <button class="action-btn" onclick="openChiBo('${name}')">Mở</button> 
+        ${currentUser?.role === 'admin' ? `<button class="action-btn delete-btn" onclick="deleteChiBo('${name}')">Xoá</button>` : ''}`;
+      ul.appendChild(li);
+    });
   });
 }
 
@@ -142,6 +149,9 @@ function addChiBo() {
   db.ref(`chibo_data/${name}`).set([]).then(() => {
     renderChiBoList();
     document.getElementById("newChiBo").value = '';
+  }).catch(err => {
+    console.error("Lỗi khi thêm chi bộ:", err);
+    alert("Không thể thêm chi bộ. Kiểm tra kết nối hoặc dữ liệu.");
   });
 }
 
@@ -169,6 +179,7 @@ function renderTable() {
   const keyword = document.getElementById("searchInput").value.toLowerCase();
   db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
+    if (!Array.isArray(list)) return;
     tbody.innerHTML = '';
     list.forEach((dv, index) => {
       if (!dv.name.toLowerCase().includes(keyword)) return;
@@ -286,5 +297,6 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
   reader.readAsArrayBuffer(file);
 });
 </script>
+
 </body>
 </html>
