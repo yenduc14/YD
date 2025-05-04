@@ -170,7 +170,7 @@ function renderTable() {
     const list = snapshot.val() || [];
     tbody.innerHTML = '';
     list.forEach((dv, index) => {
-      if (!dv.name.toLowerCase().includes(keyword)) return;
+      if (!dv.name?.toLowerCase().includes(keyword)) return;
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${index + 1}</td><td>${dv.name}</td><td>${dv.gender}</td><td>${dv.dob}</td>
@@ -228,8 +228,8 @@ function calcAge(dateStr) {
   if (months < 0) { months += 12; years--; }
   return `${years} năm ${months} tháng ${days} ngày`;
 }
-</script>
-  function exportExcel() {
+
+function exportExcel() {
   db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
     if (!Array.isArray(list)) {
