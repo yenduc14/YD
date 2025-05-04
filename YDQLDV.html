@@ -228,7 +228,7 @@ function calcAge(dateStr) {
   if (months < 0) { months += 12; years--; }
   return ${years} năm ${months} tháng ${days} ngày;
 }
-</script>
+
   function exportExcel() {
   db.ref(chibo_data/${currentChiBo}).once('value').then(snapshot => {
     const list = snapshot.val() || [];
