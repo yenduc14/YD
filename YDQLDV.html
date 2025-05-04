@@ -139,17 +139,35 @@ function renderChiBoList() {
   });
 }
 
-function addChiBo() {
-  const name = document.getElementById("newChiBo").value.trim();
-  if (!name) return alert("Nhập tên chi bộ.");
-  db.ref(`chibo_data/${name}`).set({}).then(() => {
-    renderChiBoList();
-    document.getElementById("newChiBo").value = '';
-  }).catch(err => {
-    console.error("Lỗi khi thêm chi bộ:", err);
-    alert("Không thể thêm chi bộ. Kiểm tra kết nối hoặc dữ liệu.");
-  });
-}
+ function addChiBo() {
+      const name = document.getElementById("newChiBo").value.trim();
+      if (!name) {
+        alert("Vui lòng nhập tên chi bộ.");
+        return;
+      }
+
+      const ref = db.ref("chibo_data/" + name);
+      ref.once("value")
+        .then(snapshot => {
+          if (snapshot.exists()) {
+            alert("Chi bộ đã tồn tại.");
+          } else {
+            ref.set({ createdAt: new Date().toISOString() })
+              .then(() => {
+                document.getElementById("newChiBo").value = "";
+                renderChiBoList();
+              })
+              .catch(err => {
+                console.error("Lỗi khi thêm chi bộ:", err);
+                alert("Lỗi khi thêm chi bộ. Xem console.");
+              });
+          }
+        })
+        .catch(err => {
+          console.error("Lỗi kiểm tra chi bộ:", err);
+          alert("Lỗi kiểm tra chi bộ. Xem console.");
+        });
+    }
 
 function deleteChiBo(name) {
   if (!confirm(`Xóa chi bộ "${name}"?`)) return;
