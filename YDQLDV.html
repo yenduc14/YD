@@ -31,7 +31,7 @@
        style="position: absolute; right: 20px; top: 0; height: 80px; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" />
   <div style="text-align: center; color: #007bff;">
     <h1 style="margin-bottom: 0;">ĐẢNG CỘNG SẢN VIỆT NAM</h1>
-    <h2 style="margin-top: 5px;">ĐẢNG BỘ PHƯỚNG YÊN ĐỨC</h2>
+    <h2 style="margin-top: 5px;">ĐẢNG BỘ PHƯỜNG YÊN ĐỨC</h2>
   </div>
 </div>
 
@@ -71,8 +71,8 @@
     <button class="btn" onclick="addDangVien()">➕ Thêm Đảng viên</button>
   </div>
 </div>
+
 <script>
-  
 const firebaseConfig = {
   apiKey: "AIzaSyBm2sbTD9yOOoySCkTTw8dQbTx1JKvFX6E",
   authDomain: "quanlydangvien-856fe.firebaseapp.com",
@@ -171,7 +171,7 @@ function renderTable() {
     const list = snapshot.val() || [];
     tbody.innerHTML = '';
     list.forEach((dv, index) => {
-      if (!dv.name?.toLowerCase().includes(keyword)) return;
+      if (!dv.name.toLowerCase().includes(keyword)) return;
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${index + 1}</td><td>${dv.name}</td><td>${dv.gender}</td><td>${dv.dob}</td>
@@ -286,6 +286,5 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
   reader.readAsArrayBuffer(file);
 });
 </script>
-
 </body>
 </html>
