@@ -72,6 +72,8 @@
   </div>
 </div>
 <script>
+  
+<script>
 const firebaseConfig = {
   apiKey: "AIzaSyBm2sbTD9yOOoySCkTTw8dQbTx1JKvFX6E",
   authDomain: "quanlydangvien-856fe.firebaseapp.com",
@@ -129,7 +131,7 @@ function renderChiBoList() {
     const data = snapshot.val() || {};
     for (let name in data) {
       const li = document.createElement("li");
-      li.innerHTML = <strong>${name}</strong> <button class="action-btn" onclick="openChiBo('${name}')">Mở</button> ${currentUser?.role === 'admin' ? <button class="action-btn delete-btn" onclick="deleteChiBo('${name}')">Xoá</button> : ''};
+      li.innerHTML = `<strong>${name}</strong> <button class="action-btn" onclick="openChiBo('${name}')">Mở</button> ${currentUser?.role === 'admin' ? `<button class="action-btn delete-btn" onclick="deleteChiBo('${name}')">Xoá</button>` : ''}`;
       ul.appendChild(li);
     }
   });
@@ -138,15 +140,15 @@ function renderChiBoList() {
 function addChiBo() {
   const name = document.getElementById("newChiBo").value.trim();
   if (!name) return alert("Nhập tên chi bộ.");
-  db.ref(chibo_data/${name}).set([]).then(() => {
+  db.ref(`chibo_data/${name}`).set([]).then(() => {
     renderChiBoList();
     document.getElementById("newChiBo").value = '';
   });
 }
 
 function deleteChiBo(name) {
-  if (!confirm(Xóa chi bộ "${name}"?)) return;
-  db.ref(chibo_data/${name}).remove().then(renderChiBoList);
+  if (!confirm(`Xóa chi bộ "${name}"?`)) return;
+  db.ref(`chibo_data/${name}`).remove().then(renderChiBoList);
 }
 
 function openChiBo(name) {
@@ -166,20 +168,20 @@ function backToList() {
 function renderTable() {
   const tbody = document.getElementById("dvTableBody");
   const keyword = document.getElementById("searchInput").value.toLowerCase();
-  db.ref(chibo_data/${currentChiBo}).once('value').then(snapshot => {
+  db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
     tbody.innerHTML = '';
     list.forEach((dv, index) => {
-      if (!dv.name.toLowerCase().includes(keyword)) return;
+      if (!dv.name?.toLowerCase().includes(keyword)) return;
       const tr = document.createElement("tr");
-      tr.innerHTML = 
+      tr.innerHTML = `
         <td>${index + 1}</td><td>${dv.name}</td><td>${dv.gender}</td><td>${dv.dob}</td>
         <td>${dv.ngayVaoDang}</td><td>${dv.chinhThuc}</td><td>${calcAge(dv.ngayVaoDang)}</td>
         <td>${dv.huyHieu || ''}</td><td>${dv.note || ''}</td>
         <td>
           <button class="action-btn" onclick="editDV(${index})">✏️</button>
           <button class="action-btn delete-btn" onclick="deleteDV(${index})">🗑️</button>
-        </td>;
+        </td>`;
       tbody.appendChild(tr);
     });
   });
@@ -189,29 +191,29 @@ function addDangVien() {
   const name = prompt("Tên đảng viên:");
   if (!name) return;
   const newDV = { name, gender: '', dob: '', ngayVaoDang: '', chinhThuc: '', huyHieu: '', note: '' };
-  db.ref(chibo_data/${currentChiBo}).once('value').then(snapshot => {
+  db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
     list.push(newDV);
-    db.ref(chibo_data/${currentChiBo}).set(list).then(renderTable);
+    db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable);
   });
 }
 
 function editDV(index) {
   const newNote = prompt("Cập nhật ghi chú:");
   if (newNote === null) return;
-  db.ref(chibo_data/${currentChiBo}).once('value').then(snapshot => {
+  db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
     list[index].note = newNote;
-    db.ref(chibo_data/${currentChiBo}).set(list).then(renderTable);
+    db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable);
   });
 }
 
 function deleteDV(index) {
   if (!confirm("Xoá đảng viên này?")) return;
-  db.ref(chibo_data/${currentChiBo}).once('value').then(snapshot => {
+  db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
     list.splice(index, 1);
-    db.ref(chibo_data/${currentChiBo}).set(list).then(renderTable);
+    db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable);
   });
 }
 
@@ -226,11 +228,11 @@ function calcAge(dateStr) {
   let days = now.getDate() - from.getDate();
   if (days < 0) { days += 30; months--; }
   if (months < 0) { months += 12; years--; }
-  return ${years} năm ${months} tháng ${days} ngày;
+  return `${years} năm ${months} tháng ${days} ngày`;
 }
 
-  function exportExcel() {
-  db.ref(chibo_data/${currentChiBo}).once('value').then(snapshot => {
+function exportExcel() {
+  db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
     if (!Array.isArray(list)) {
       alert("Dữ liệu chi bộ không đúng định dạng mảng!");
@@ -253,7 +255,7 @@ function calcAge(dateStr) {
     const ws = XLSX.utils.aoa_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Danh sách");
-    XLSX.writeFile(wb, ${currentChiBo}_dangvien.xlsx);
+    XLSX.writeFile(wb, `${currentChiBo}_dangvien.xlsx`);
   });
 }
 
@@ -276,7 +278,7 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
         huyHieu: r[7] || '',
         note: r[8] || ''
       }));
-      db.ref(chibo_data/${currentChiBo}).set(convert).then(renderTable);
+      db.ref(`chibo_data/${currentChiBo}`).set(convert).then(renderTable);
     } catch (err) {
       console.error("Lỗi khi đọc file Excel:", err);
       alert("Lỗi khi đọc file Excel. Vui lòng kiểm tra định dạng.");
@@ -285,5 +287,6 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
   reader.readAsArrayBuffer(file);
 });
 </script>
+
 </body>
 </html>
