@@ -25,10 +25,8 @@
   </style>
 </head>
 <body>
-<!-- Tiêu đề + Cờ Đảng -->
 <div style="display: flex; justify-content: center; align-items: center; position: relative;">
-  <img src="codang.png" 
-       style="position: absolute; right: 20px; top: 0; height: 80px; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" />
+  <img src="codang.png" style="position: absolute; right: 20px; top: 0; height: 80px; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" />
   <div style="text-align: center; color: #007bff;">
     <h1 style="margin-bottom: 0;">ĐẢNG CỘNG SẢN VIỆT NAM</h1>
     <h2 style="margin-top: 5px;">ĐẢNG BỘ PHƯỜNG YÊN ĐỨC</h2>
@@ -127,19 +125,17 @@ function renderChiBoList() {
   const ul = document.getElementById("chiBoList");
   ul.innerHTML = '';
   db.ref('chibo_data').once('value').then(snapshot => {
-    const data = snapshot.val();
-    if (!data || typeof data !== 'object') {
+    let data = snapshot.val();
+    if (Array.isArray(data)) {
       console.warn("Dữ liệu chi bộ không đúng định dạng object. Đang reset lại...");
-      db.ref('chibo_data').set({});
-      return;
+      data = {};
+      db.ref('chibo_data').set(data);
     }
-    Object.keys(data).forEach(name => {
+    for (let name in data) {
       const li = document.createElement("li");
-      li.innerHTML = `<strong>${name}</strong> 
-        <button class="action-btn" onclick="openChiBo('${name}')">Mở</button> 
-        ${currentUser?.role === 'admin' ? `<button class="action-btn delete-btn" onclick="deleteChiBo('${name}')">Xoá</button>` : ''}`;
+      li.innerHTML = `<strong>${name}</strong> <button class="action-btn" onclick="openChiBo('${name}')">Mở</button> ${currentUser?.role === 'admin' ? `<button class="action-btn delete-btn" onclick="deleteChiBo('${name}')">Xoá</button>` : ''}`;
       ul.appendChild(li);
-    });
+    }
   });
 }
 
@@ -179,10 +175,10 @@ function renderTable() {
   const keyword = document.getElementById("searchInput").value.toLowerCase();
   db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
-    if (!Array.isArray(list)) return;
     tbody.innerHTML = '';
+    if (!Array.isArray(list)) return;
     list.forEach((dv, index) => {
-      if (!dv.name.toLowerCase().includes(keyword)) return;
+      if (!dv.name?.toLowerCase().includes(keyword)) return;
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${index + 1}</td><td>${dv.name}</td><td>${dv.gender}</td><td>${dv.dob}</td>
@@ -244,22 +240,12 @@ function calcAge(dateStr) {
 function exportExcel() {
   db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
-    if (!Array.isArray(list)) {
-      alert("Dữ liệu chi bộ không đúng định dạng mảng!");
-      return;
-    }
     const rows = [["STT", "Họ và tên", "Giới tính", "Ngày sinh", "Ngày vào Đảng", "Chính thức", "Tuổi Đảng", "Huy hiệu", "Ghi chú"]];
     list.forEach((dv, index) => {
       rows.push([
         index + 1,
-        dv.name || '',
-        dv.gender || '',
-        dv.dob || '',
-        dv.ngayVaoDang || '',
-        dv.chinhThuc || '',
-        calcAge(dv.ngayVaoDang || ''),
-        dv.huyHieu || '',
-        dv.note || ''
+        dv.name || '', dv.gender || '', dv.dob || '', dv.ngayVaoDang || '',
+        dv.chinhThuc || '', calcAge(dv.ngayVaoDang || ''), dv.huyHieu || '', dv.note || ''
       ]);
     });
     const ws = XLSX.utils.aoa_to_sheet(rows);
@@ -297,6 +283,5 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
   reader.readAsArrayBuffer(file);
 });
 </script>
-
 </body>
 </html>
