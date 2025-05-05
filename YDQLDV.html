@@ -300,7 +300,7 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: ""});  // Đảm bảo không có giá trị null
 
-      // Duyệt qua từng dòng dữ liệu từ Excel và chuyển đổi
+      // Làm sạch dữ liệu và kiểm tra định dạng của từng cột
       const convert = rows.slice(1).map(r => ({
         name: r[0] || '',                // Họ và tên
         gender: r[1] || '',              // Giới tính (Nam/Nữ)
