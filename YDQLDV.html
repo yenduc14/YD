@@ -304,7 +304,7 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
       const convert = rows.slice(1).map(r => ({
         name: r[0] || '',                // Họ và tên
         gender: r[1] || '',              // Giới tính (Nam/Nữ)
-        dob: r[2] || '',                // Ngày sinh
+        dob: formatDate(r[2]),           // Ngày sinh
         ngayVaoDang: r[3] || '',        // Ngày vào Đảng
         chinhThuc: r[4] || '',          // Chế độ chính thức
         tuoiDang: r[5] || '',           // Tuổi Đảng
@@ -323,6 +323,23 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
   
   reader.readAsArrayBuffer(file);
 });
+
+// Hàm kiểm tra và định dạng ngày sinh
+function formatDate(date) {
+  if (!date) return '';
+  try {
+    // Kiểm tra nếu ngày có định dạng dd/mm/yyyy
+    const parts = date.split('/');
+    if (parts.length === 3) {
+      const formattedDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+      return formattedDate.toLocaleDateString('vi-VN');
+    }
+    return '';
+  } catch (err) {
+    console.error("Lỗi định dạng ngày sinh:", err);
+    return '';
+  }
+}
 
 </script>
 </body>
