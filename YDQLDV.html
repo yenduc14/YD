@@ -300,16 +300,19 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: ""});  // Đảm bảo không có giá trị null
 
+      // Loại bỏ dòng tiêu đề và những dòng trống
+      const cleanedRows = rows.slice(1).filter(row => row.length > 0 && row.some(cell => cell !== ''));  // Loại bỏ dòng trống
+
       // Làm sạch dữ liệu và kiểm tra định dạng của từng cột
-      const convert = rows.slice(1).map(r => ({
-        name: r[0] || '',                // Họ và tên
-        gender: r[1] || '',              // Giới tính (Nam/Nữ)
-        dob: formatDate(r[2]),           // Ngày sinh
-        ngayVaoDang: r[3] || '',        // Ngày vào Đảng
-        chinhThuc: r[4] || '',          // Chế độ chính thức
-        tuoiDang: r[5] || '',           // Tuổi Đảng
-        huyHieu: r[6] || '',            // Huy hiệu
-        note: r[7] || ''                // Ghi chú
+      const convert = cleanedRows.map(r => ({
+        name: r[1] || '',                // Họ và tên
+        gender: r[2] || '',              // Giới tính (Nam/Nữ)
+        dob: formatDate(r[3]),           // Ngày sinh
+        ngayVaoDang: r[4] || '',        // Ngày vào Đảng
+        chinhThuc: r[5] || '',          // Chế độ chính thức
+        tuoiDang: r[6] || '',           // Tuổi Đảng
+        huyHieu: r[7] || '',            // Huy hiệu
+        note: r[8] || ''                // Ghi chú
       }));
 
       // Lưu dữ liệu vào Firebase
