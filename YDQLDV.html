@@ -292,6 +292,7 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
   const file = e.target.files[0];
   if (!file) return alert("Không có file nào được chọn");
   const reader = new FileReader();
+  
   reader.onload = function(e) {
     try {
       const data = new Uint8Array(e.target.result);
@@ -299,24 +300,27 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: ""});  // Đảm bảo không có giá trị null
 
-      // Làm sạch và chuyển đổi dữ liệu vào đúng định dạng
-      const convert = rows.slice(2).map(r => ({
-        name: r[1] || '',
-        gender: r[2] === 'x' ? 'Nam' : (r[2] === 'y' ? 'Nữ' : ''),
-        dob: r[3] || '',
-        ngayVaoDang: r[4] || '',
-        chinhThuc: r[5] || '',
-        tuoiDang: r[6] || '',
-        huyHieu: r[7] || '',
-        note: r[8] || ''
+      // Duyệt qua từng dòng dữ liệu từ Excel và chuyển đổi
+      const convert = rows.slice(1).map(r => ({
+        name: r[0] || '',                // Họ và tên
+        gender: r[1] || '',              // Giới tính (Nam/Nữ)
+        dob: r[2] || '',                // Ngày sinh
+        ngayVaoDang: r[3] || '',        // Ngày vào Đảng
+        chinhThuc: r[4] || '',          // Chế độ chính thức
+        tuoiDang: r[5] || '',           // Tuổi Đảng
+        huyHieu: r[6] || '',            // Huy hiệu
+        note: r[7] || ''                // Ghi chú
       }));
 
+      // Lưu dữ liệu vào Firebase
       db.ref(`chibo_data/${currentChiBo}`).set(convert).then(renderTable);
+
     } catch (err) {
       console.error("Lỗi khi đọc file Excel:", err);
       alert("Lỗi khi đọc file Excel. Vui lòng kiểm tra định dạng.");
     }
   };
+  
   reader.readAsArrayBuffer(file);
 });
 
