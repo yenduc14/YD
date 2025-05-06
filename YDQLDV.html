@@ -219,25 +219,25 @@ function renderTable() {
     tbody.innerHTML = '';
     if (!Array.isArray(list)) return;
     list.forEach((dv, index) => {
-  if (!dv.name?.toLowerCase().includes(keyword)) return;
-  const tuoiDangStr = calcAge(dv.ngayVaoDang);
-  const highlight = shouldHighlight(dv.ngayVaoDang);
-  const nameCell = highlight ? `<span style="color:red; font-weight:bold;">${dv.name}</span>` : dv.name;
+      if (!dv.name?.toLowerCase().includes(keyword)) return;
+      const tuoiDangStr = calcAge(dv.ngayVaoDang);
+      const highlight = shouldHighlight(dv.ngayVaoDang);
+      const nameCell = highlight ? `<span style="color:red; font-weight:bold;">${dv.name}</span>` : dv.name;
 
- const tr = document.createElement("tr");
-if (shouldHighlight(dv.ngayVaoDang)) {
-  tr.style.color = "red";
-}
-  tr.innerHTML = `
-    <td>${index + 1}</td><td>${nameCell}</td><td>${dv.gender}</td><td>${dv.dob}</td>
-    <td>${dv.ngayVaoDang}</td><td>${dv.chinhThuc}</td><td>${tuoiDangStr}</td>
-    <td>${dv.huyHieu || ''}</td><td>${dv.note || ''}</td>
-    <td>
-      <button class="action-btn" onclick="editDV(${index})">✏️</button>
-      <button class="action-btn delete-btn" onclick="deleteDV(${index})">🗑️</button>
-    </td>`;
-  tbody.appendChild(tr);
-});
+      const tr = document.createElement("tr");
+      if (shouldHighlight(dv.ngayVaoDang)) {
+        tr.style.color = "red";
+      }
+      tr.innerHTML = `
+        <td>${index + 1}</td><td>${nameCell}</td><td>${dv.gender}</td><td>${formatDate(dv.dob)}</td>
+        <td>${formatDate(dv.ngayVaoDang)}</td><td>${dv.chinhThuc}</td><td>${tuoiDangStr}</td>
+        <td>${dv.huyHieu || ''}</td><td>${dv.note || ''}</td>
+        <td>
+          <button class="action-btn" onclick="editDV(${index})">✏️</button>
+          <button class="action-btn delete-btn" onclick="deleteDV(${index})">🗑️</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
   });
 }
 
@@ -366,26 +366,27 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
       const rows = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: ""});  // header:1 để giữ mảng dòng, defval để tránh undefined
 
       // Bỏ duy nhất dòng tiêu đề đầu tiên
+      
 function excelDateToString(serial) {
   if (typeof serial === 'number') {
-    const utc_days = Math.floor(serial - 25569);  // Sửa lại giá trị 25569 cho chuẩn Excel
+    const utc_days = Math.floor(serial - 25569);  // Điều chỉnh giá trị 25569 cho chuẩn ngày Excel
     const utc_value = utc_days * 86400;  // Chuyển đổi thành giây
-    const date_info = new Date(utc_value * 1000);  // Chuyển giây thành Date object
+    const date_info = new Date(utc_value * 1000);  // Chuyển đổi thành đối tượng Date trong JavaScript
     const day = String(date_info.getDate()).padStart(2, '0');
     const month = String(date_info.getMonth() + 1).padStart(2, '0');
     const year = date_info.getFullYear();
     return `${day}/${month}/${year}`;  // Định dạng ngày theo kiểu dd/mm/yyyy
   } else if (typeof serial === 'string') {
-    return serial.trim();  // Nếu là chuỗi, giữ nguyên
+    return serial.trim();  // Nếu đã là chuỗi, chỉ cần cắt bỏ khoảng trắng
   }
-  return '';  // Trả về nếu không phải kiểu số hoặc chuỗi
+  return '';  // Trả về chuỗi rỗng nếu không phải kiểu số hoặc chuỗi
 }
 
 const convert = rows.slice(2).map(r => ({
   name: r[1] || '',
   gender: r[2]?.toLowerCase() === 'x' ? 'Nữ' : (r[2]?.toLowerCase() === 'y' ? 'Nam' : ''),
-  dob: r[3] || '',
-  ngayVaoDang: r[4] || '',
+  dob: excelDateToString(r[3]) || '',  // Áp dụng excelDateToString cho 'dob'
+  ngayVaoDang: excelDateToString(r[4]) || '',  // Áp dụng excelDateToString cho 'ngayVaoDang'
   chinhThuc: r[5] || '',
   tuoiDang: r[6] || '',
   huyHieu: r[7] || '',
@@ -405,11 +406,10 @@ const convert = rows.slice(2).map(r => ({
 function formatDate(date) {
   if (!date) return '';
   try {
-    // Kiểm tra nếu ngày có định dạng dd/mm/yyyy
     const parts = date.split('/');
     if (parts.length === 3) {
       const formattedDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-      return formattedDate.toLocaleDateString('vi-VN');
+      return formattedDate.toLocaleDateString('vi-VN');  // Đảm bảo ngày được định dạng là dd/mm/yyyy
     }
     return '';
   } catch (err) {
