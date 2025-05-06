@@ -253,45 +253,48 @@ function renderTable() {
 
 function addDangVien() {
   const name = prompt("Tên đảng viên:");
-  const gender = prompt("Giới tính:");
-  const dob = prompt("Ngày sinh:");
-  const ngayVaoDang = prompt("Ngày vào Đảng:");
-  const huyHieu = prompt("Huy hiệu:");
-  const note = prompt("Ghi chú:");
+  if (!name) return; // Nếu không nhập tên thì thoát hàm
 
-  if (!name || !gender || !dob || !ngayVaoDang) {
-    alert("Vui lòng nhập đầy đủ thông tin.");
-    return;
-  }
-
+  // Tạo đối tượng đảng viên mới với các trường có thể để trống
   const newDV = {
-    name,
-    gender,
-    dob,
-    ngayVaoDang,
-    huyHieu: huyHieu || "",
-    note: note || ""
+    name: name, 
+    gender: '',
+    dob: '',
+    ngayVaoDang: '',
+    huyHieu: '',
+    note: ''
   };
 
+  // Lấy danh sách đảng viên từ Firebase
   db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
-    list.push(newDV);
-    db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable);
+    list.push(newDV); // Thêm đảng viên mới vào danh sách
+    db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable); // Cập nhật danh sách lên Firebase
   });
 }
 
 function editDV(index) {
-  const newNote = prompt("Cập nhật ghi chú:");
-  if (newNote === null) return;
-  db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
-    const list = snapshot.val() || [];
-    if (list[index]) {
-      list[index].note = newNote;
-      db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable);
-    } else {
-      console.error("Không tìm thấy đảng viên tại vị trí chỉ số:", index);
-    }
-  });
+  const dv = getByDuyIndex(index);  // Hàm lấy thông tin đảng viên tại index
+  const name = prompt("Cập nhật tên đảng viên:", dv.name);
+  const gender = prompt("Cập nhật giới tính:", dv.gender);
+  const dob = prompt("Cập nhật ngày sinh:", dv.dob);
+  const ngayVaoDang = prompt("Cập nhật ngày vào Đảng:", dv.ngayVaoDang);
+  const huyHieu = prompt("Cập nhật huy hiệu:", dv.huyHieu);
+  const note = prompt("Cập nhật ghi chú:", dv.note);
+
+  // Kiểm tra điều kiện nhập liệu
+  if (name != null && gender != null && dob != null && ngayVaoDang != null && huyHieu != null && note != null) {
+    const updatedDV = {
+      name: name || dv.name,
+      gender: gender || dv.gender,
+      dob: dob || dv.dob,
+      ngayVaoDang: ngayVaoDang || dv.ngayVaoDang,
+      huyHieu: huyHieu || dv.huyHieu,
+      note: note || dv.note
+    };
+
+    updateDVInDB(index, updatedDV); // Cập nhật vào Firebase
+  }
 }
 
 function updateDVInDB(index, updatedDV) {
