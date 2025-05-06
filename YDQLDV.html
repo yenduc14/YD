@@ -333,7 +333,6 @@ function shouldHighlight(ngayVaoDangStr) {
 
   return false;
 }
-}
 
 function exportExcel() {
   db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
