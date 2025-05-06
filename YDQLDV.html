@@ -376,7 +376,7 @@ function excelDateToString(serial) {
     const year = date_info.getFullYear();
     return `${day}/${month}/${year}`;
   } else if (typeof serial === 'string') {
-    return serial.trim();
+    return serial.trim(); // đã là dạng chuỗi thì giữ nguyên
   }
   return '';
 }
