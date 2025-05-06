@@ -269,35 +269,42 @@ function addDangVien() {
   db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
     list.push(newDV); // Thêm đảng viên mới vào danh sách
-    db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable); // Cập nhật danh sách lên Firebase
+
+    // Cập nhật danh sách lên Firebase và render lại bảng
+    db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable);
   });
 }
 
 function editDV(index) {
-  // Lấy dữ liệu đảng viên cũ
-  const dv = currentChiBoData[index];
+  // Lấy dữ liệu chi bộ hiện tại
+  db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
+    const list = snapshot.val() || [];
+    const dv = list[index];  // Đảng viên cần sửa
 
-  // Sửa các trường thông tin của đảng viên
-  const name = prompt("Cập nhật tên đảng viên:", dv.name);
-  const gender = prompt("Cập nhật giới tính:", dv.gender);
-  const dob = prompt("Cập nhật ngày sinh:", dv.dob);
-  const ngayVaoDang = prompt("Cập nhật ngày vào Đảng:", dv.ngayVaoDang);
-  const huyHieu = prompt("Cập nhật huy hiệu:", dv.huyHieu);
-  const note = prompt("Cập nhật ghi chú:", dv.note);
+    // Tiến hành sửa thông tin đảng viên
+    const name = prompt("Cập nhật tên đảng viên:", dv.name);
+    const gender = prompt("Cập nhật giới tính:", dv.gender);
+    const dob = prompt("Cập nhật ngày sinh:", dv.dob);
+    const ngayVaoDang = prompt("Cập nhật ngày vào Đảng:", dv.ngayVaoDang);
+    const huyHieu = prompt("Cập nhật huy hiệu:", dv.huyHieu);
+    const note = prompt("Cập nhật ghi chú:", dv.note);
 
-  // Kiểm tra điều kiện nhập liệu
-  if (name != null && gender != null && dob != null && ngayVaoDang != null && huyHieu != null && note != null) {
-    const updatedDV = {
-      name: name || dv.name,
-      gender: gender || dv.gender,
-      dob: dob || dv.dob,
-      ngayVaoDang: ngayVaoDang || dv.ngayVaoDang,
-      huyHieu: huyHieu || dv.huyHieu,
-      note: note || dv.note
-    };
+    // Kiểm tra điều kiện nhập liệu
+    if (name != null && gender != null && dob != null && ngayVaoDang != null && huyHieu != null && note != null) {
+      const updatedDV = {
+        name: name || dv.name,
+        gender: gender || dv.gender,
+        dob: dob || dv.dob,
+        ngayVaoDang: ngayVaoDang || dv.ngayVaoDang,
+        huyHieu: huyHieu || dv.huyHieu,
+        note: note || dv.note
+      };
 
-    updateDVInDB(index, updatedDV); // Cập nhật vào Firebase
-  }
+      // Cập nhật lại danh sách vào Firebase
+      list[index] = updatedDV; // Cập nhật đảng viên
+      db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable); // Cập nhật Firebase và render lại bảng
+    }
+  });
 }
 
 function updateDVInDB(index, updatedDV) {
