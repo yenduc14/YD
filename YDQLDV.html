@@ -317,10 +317,10 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
 
 const convert = rows.slice(2).map(r => ({
   name: r[1] || '',
-  gender: r[2] === 'x' ? 'Nam' : (r[2] === 'y' ? 'Nữ' : ''),
-  dob: excelDateToString(r[3]),
-  ngayVaoDang: excelDateToString(r[4]),
-  chinhThuc: excelDateToString(r[5]),
+  gender: r[2]?.toLowerCase() === 'x' ? 'Nữ' : (r[2]?.toLowerCase() === 'y' ? 'Nam' : ''),
+  dob: r[3] || '',
+  ngayVaoDang: r[4] || '',
+  chinhThuc: r[5] || '',
   tuoiDang: r[6] || '',
   huyHieu: r[7] || '',
   note: r[8] || ''
