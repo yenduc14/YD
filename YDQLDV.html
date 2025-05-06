@@ -292,38 +292,31 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
   const file = e.target.files[0];
   if (!file) return alert("Không có file nào được chọn");
   const reader = new FileReader();
-  
   reader.onload = function(e) {
     try {
       const data = new Uint8Array(e.target.result);
       const workbook = XLSX.read(data, {type: 'array'});
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: ""});  // Đảm bảo không có giá trị null
+      const rows = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: ""});  // header:1 để giữ mảng dòng, defval để tránh undefined
 
-      // Loại bỏ dòng tiêu đề và những dòng trống
-      const cleanedRows = rows.slice(1).filter(row => row.length > 0 && row.some(cell => cell !== ''));  // Loại bỏ dòng trống
-
-      // Làm sạch dữ liệu và kiểm tra định dạng của từng cột
-      const convert = cleanedRows.map(r => ({
-        name: r[1] || '',                // Họ và tên
-        gender: r[2] || '',              // Giới tính (Nam/Nữ)
-        dob: formatDate(r[3]),           // Ngày sinh
-        ngayVaoDang: r[4] || '',        // Ngày vào Đảng
-        chinhThuc: r[5] || '',          // Chế độ chính thức
-        tuoiDang: r[6] || '',           // Tuổi Đảng
-        huyHieu: r[7] || '',            // Huy hiệu
-        note: r[8] || ''                // Ghi chú
+      // Bỏ duy nhất dòng tiêu đề đầu tiên
+      const convert = rows.slice(1).map(r => ({
+        name: r[1] || '',             // Họ và tên
+        gender: r[2] || '',           // Giới tính
+        dob: r[3] || '',              // Ngày sinh (định dạng dd/mm/yyyy)
+        ngayVaoDang: r[4] || '',      // Ngày vào Đảng
+        chinhThuc: r[5] || '',        // Ngày chính thức
+        tuoiDang: r[6] || '',         // Tuổi Đảng (chuỗi hoặc sẽ được tính lại)
+        huyHieu: r[7] || '',          // Huy hiệu
+        note: r[8] || ''              // Ghi chú
       }));
 
-      // Lưu dữ liệu vào Firebase
       db.ref(`chibo_data/${currentChiBo}`).set(convert).then(renderTable);
-
     } catch (err) {
       console.error("Lỗi khi đọc file Excel:", err);
       alert("Lỗi khi đọc file Excel. Vui lòng kiểm tra định dạng.");
     }
   };
-  
   reader.readAsArrayBuffer(file);
 });
 
