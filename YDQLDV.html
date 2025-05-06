@@ -366,7 +366,7 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
       const rows = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: ""});  // header:1 để giữ mảng dòng, defval để tránh undefined
 
       // Bỏ duy nhất dòng tiêu đề đầu tiên
-     function excelDateToString(serial) {
+function excelDateToString(serial) {
   if (typeof serial === 'number') {
     const utc_days = Math.floor(serial - 25569);
     const utc_value = utc_days * 86400;
@@ -376,11 +376,10 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
     const year = date_info.getFullYear();
     return `${day}/${month}/${year}`;
   } else if (typeof serial === 'string') {
-    return serial.trim(); // đã là dạng chuỗi thì giữ nguyên
+    return serial.trim();
   }
   return '';
 }
-
 const convert = rows.slice(2).map(r => ({
   name: r[1] || '',
   gender: r[2]?.toLowerCase() === 'x' ? 'Nữ' : (r[2]?.toLowerCase() === 'y' ? 'Nam' : ''),
