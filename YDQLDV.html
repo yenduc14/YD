@@ -374,11 +374,11 @@ function excelDateToString(serial) {
     const day = String(date_info.getDate()).padStart(2, '0');
     const month = String(date_info.getMonth() + 1).padStart(2, '0');
     const year = date_info.getFullYear();
-    return `${day}/${month}/${year}`;
+    return `${day}/${month}/${year}`;  // Định dạng ngày theo kiểu dd/mm/yyyy
   } else if (typeof serial === 'string') {
-    return serial.trim(); // nếu là chuỗi thì giữ nguyên
+    return serial.trim();  // Nếu là chuỗi, giữ nguyên
   }
-  return ''; // trả về nếu không phải kiểu số hoặc chuỗi
+  return '';  // Trả về nếu không phải kiểu số hoặc chuỗi
 }
 
 const convert = rows.slice(2).map(r => ({
