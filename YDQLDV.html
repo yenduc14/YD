@@ -300,16 +300,31 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
       const rows = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: ""});  // header:1 để giữ mảng dòng, defval để tránh undefined
 
       // Bỏ duy nhất dòng tiêu đề đầu tiên
-      const convert = rows.slice(1).map(r => ({
-        name: r[1] || '',             // Họ và tên
-        gender: r[2] || '',           // Giới tính
-        dob: r[3] || '',              // Ngày sinh (định dạng dd/mm/yyyy)
-        ngayVaoDang: r[4] || '',      // Ngày vào Đảng
-        chinhThuc: r[5] || '',        // Ngày chính thức
-        tuoiDang: r[6] || '',         // Tuổi Đảng (chuỗi hoặc sẽ được tính lại)
-        huyHieu: r[7] || '',          // Huy hiệu
-        note: r[8] || ''              // Ghi chú
-      }));
+     function excelDateToString(serial) {
+  if (typeof serial === 'number') {
+    const utc_days = Math.floor(serial - 25569);
+    const utc_value = utc_days * 86400;
+    const date_info = new Date(utc_value * 1000);
+    const day = String(date_info.getDate()).padStart(2, '0');
+    const month = String(date_info.getMonth() + 1).padStart(2, '0');
+    const year = date_info.getFullYear();
+    return `${day}/${month}/${year}`;
+  } else if (typeof serial === 'string') {
+    return serial.trim(); // đã là dạng chuỗi thì giữ nguyên
+  }
+  return '';
+}
+
+const convert = rows.slice(2).map(r => ({
+  name: r[1] || '',
+  gender: r[2] === 'x' ? 'Nam' : (r[2] === 'y' ? 'Nữ' : ''),
+  dob: excelDateToString(r[3]),
+  ngayVaoDang: excelDateToString(r[4]),
+  chinhThuc: excelDateToString(r[5]),
+  tuoiDang: r[6] || '',
+  huyHieu: r[7] || '',
+  note: r[8] || ''
+}));
 
       db.ref(`chibo_data/${currentChiBo}`).set(convert).then(renderTable);
     } catch (err) {
