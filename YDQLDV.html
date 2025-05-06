@@ -224,7 +224,10 @@ function renderTable() {
   const highlight = shouldHighlight(dv.ngayVaoDang);
   const nameCell = highlight ? `<span style="color:red; font-weight:bold;">${dv.name}</span>` : dv.name;
 
-  const tr = document.createElement("tr");
+ const tr = document.createElement("tr");
+if (shouldHighlight(dv.ngayVaoDang)) {
+  tr.style.color = "red";
+}
   tr.innerHTML = `
     <td>${index + 1}</td><td>${nameCell}</td><td>${dv.gender}</td><td>${dv.dob}</td>
     <td>${dv.ngayVaoDang}</td><td>${dv.chinhThuc}</td><td>${tuoiDangStr}</td>
@@ -300,28 +303,35 @@ function shouldHighlight(dateStr) {
     if (parts.length !== 3) return false;
     const joinDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
     const now = new Date();
-    const anniversaries = [
-      [3, 2], [19, 5], [2, 9], [7, 11]
-    ];
     const milestones = [30, 40, 45, 50, 55, 60, 65, 70];
+    const specialDates = [
+      { day: 3, month: 2 },
+      { day: 19, month: 5 },
+      { day: 2, month: 9 },
+      { day: 7, month: 11 }
+    ];
 
-    for (let [d, m] of anniversaries) {
-      const target = new Date(now.getFullYear(), m - 1, d);
-      const oneMonthBefore = new Date(target);
-      oneMonthBefore.setMonth(oneMonthBefore.getMonth() - 1);
-      if (now >= oneMonthBefore && now <= target) {
-        let years = target.getFullYear() - joinDate.getFullYear();
+    for (let { day, month } of specialDates) {
+      const currentYear = now.getFullYear();
+      const eventDate = new Date(currentYear, month - 1, day);
+      const startHighlight = new Date(eventDate);
+      startHighlight.setMonth(startHighlight.getMonth() - 1);
+
+      if (now >= startHighlight && now <= eventDate) {
+        const years = currentYear - joinDate.getFullYear();
+        const joinMonth = joinDate.getMonth();
+        const joinDay = joinDate.getDate();
+
         if (
-          target.getMonth() < joinDate.getMonth() ||
-          (target.getMonth() === joinDate.getMonth() && target.getDate() < joinDate.getDate())
+          (joinMonth < month - 1 || (joinMonth === month - 1 && joinDay <= day)) &&
+          milestones.includes(years)
         ) {
-          years--;
+          return true;
         }
-        if (milestones.includes(years)) return true;
       }
     }
     return false;
-  } catch {
+  } catch (err) {
     return false;
   }
 }
