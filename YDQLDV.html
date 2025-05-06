@@ -281,25 +281,17 @@ function addDangVien() {
 }
 
 function editDV(index) {
-  const dv = getDVByIndex(index); // Hàm lấy thông tin đảng viên tại index
-  const name = prompt("Cập nhật tên đảng viên:", dv.name);
-  const gender = prompt("Cập nhật giới tính:", dv.gender);
-  const dob = prompt("Cập nhật ngày sinh:", dv.dob);
-  const ngayVaoDang = prompt("Cập nhật ngày vào Đảng:", dv.ngayVaoDang);
-  const huyHieu = prompt("Cập nhật huy hiệu:", dv.huyHieu);
-  const note = prompt("Cập nhật ghi chú:", dv.note);
-
-  if (name !== null && gender !== null && dob !== null && ngayVaoDang !== null && huyHieu !== null && note !== null) {
-    const updatedDV = {
-      name: name || dv.name,
-      gender: gender || dv.gender,
-      dob: dob || dv.dob,
-      ngayVaoDang: ngayVaoDang || dv.ngayVaoDang,
-      huyHieu: huyHieu || dv.huyHieu,
-      note: note || dv.note
-    };
-    updateDVInDB(index, updatedDV); // Cập nhật đảng viên vào Firebase
-  }
+  const newNote = prompt("Cập nhật ghi chú:");
+  if (newNote === null) return;
+  db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
+    const list = snapshot.val() || [];
+    if (list[index]) {
+      list[index].note = newNote;
+      db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable);
+    } else {
+      console.error("Không tìm thấy đảng viên tại vị trí chỉ số:", index);
+    }
+  });
 }
 
 function updateDVInDB(index, updatedDV) {
