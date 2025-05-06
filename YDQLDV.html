@@ -220,22 +220,32 @@ function renderTable() {
     if (!Array.isArray(list)) return;
     list.forEach((dv, index) => {
       if (!dv.name?.toLowerCase().includes(keyword)) return;
-      const tuoiDangStr = calcAge(dv.ngayVaoDang);
+
+      // Sử dụng hàm shouldHighlight để xác định nếu cần highlight
       const highlight = shouldHighlight(dv.ngayVaoDang);
       const nameCell = highlight ? `<span style="color:red; font-weight:bold;">${dv.name}</span>` : dv.name;
+      const tuoiDangStr = calcAge(dv.ngayVaoDang);
 
       const tr = document.createElement("tr");
-      if (shouldHighlight(dv.ngayVaoDang)) {
-        tr.style.color = "red";
+      if (highlight) {
+        tr.style.color = "red"; // Áp dụng màu đỏ cho dòng khi tròn tuổi Đảng
       }
+
       tr.innerHTML = `
-        <td>${index + 1}</td><td>${nameCell}</td><td>${dv.gender}</td><td>${formatDate(dv.dob)}</td>
-        <td>${formatDate(dv.ngayVaoDang)}</td><td>${dv.chinhThuc}</td><td>${tuoiDangStr}</td>
-        <td>${dv.huyHieu || ''}</td><td>${dv.note || ''}</td>
+        <td>${index + 1}</td>
+        <td>${nameCell}</td>
+        <td>${dv.gender}</td>
+        <td>${dv.dob}</td>
+        <td>${dv.ngayVaoDang}</td>
+        <td>${dv.chinhThuc}</td>
+        <td>${tuoiDangStr}</td>
+        <td>${dv.huyHieu || ''}</td>
+        <td>${dv.note || ''}</td>
         <td>
           <button class="action-btn" onclick="editDV(${index})">✏️</button>
           <button class="action-btn delete-btn" onclick="deleteDV(${index})">🗑️</button>
-        </td>`;
+        </td>
+      `;
       tbody.appendChild(tr);
     });
   });
@@ -243,8 +253,26 @@ function renderTable() {
 
 function addDangVien() {
   const name = prompt("Tên đảng viên:");
-  if (!name) return;
-  const newDV = { name, gender: '', dob: '', ngayVaoDang: '', chinhThuc: '', huyHieu: '', note: '' };
+  const gender = prompt("Giới tính:");
+  const dob = prompt("Ngày sinh:");
+  const ngayVaoDang = prompt("Ngày vào Đảng:");
+  const huyHieu = prompt("Huy hiệu:");
+  const note = prompt("Ghi chú:");
+
+  if (!name || !gender || !dob || !ngayVaoDang) {
+    alert("Vui lòng nhập đầy đủ thông tin.");
+    return;
+  }
+
+  const newDV = {
+    name,
+    gender,
+    dob,
+    ngayVaoDang,
+    huyHieu: huyHieu || "",
+    note: note || ""
+  };
+
   db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
     list.push(newDV);
@@ -253,12 +281,39 @@ function addDangVien() {
 }
 
 function editDV(index) {
-  const newNote = prompt("Cập nhật ghi chú:");
-  if (newNote === null) return;
+  const dv = getDVByIndex(index); // Hàm lấy thông tin đảng viên tại index
+  const name = prompt("Cập nhật tên đảng viên:", dv.name);
+  const gender = prompt("Cập nhật giới tính:", dv.gender);
+  const dob = prompt("Cập nhật ngày sinh:", dv.dob);
+  const ngayVaoDang = prompt("Cập nhật ngày vào Đảng:", dv.ngayVaoDang);
+  const huyHieu = prompt("Cập nhật huy hiệu:", dv.huyHieu);
+  const note = prompt("Cập nhật ghi chú:", dv.note);
+
+  if (name !== null && gender !== null && dob !== null && ngayVaoDang !== null && huyHieu !== null && note !== null) {
+    const updatedDV = {
+      name: name || dv.name,
+      gender: gender || dv.gender,
+      dob: dob || dv.dob,
+      ngayVaoDang: ngayVaoDang || dv.ngayVaoDang,
+      huyHieu: huyHieu || dv.huyHieu,
+      note: note || dv.note
+    };
+    updateDVInDB(index, updatedDV); // Cập nhật đảng viên vào Firebase
+  }
+}
+
+function updateDVInDB(index, updatedDV) {
   db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
-    list[index].note = newNote;
+    list[index] = updatedDV;
     db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable);
+  });
+}
+
+function getDVByIndex(index) {
+  db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
+    const list = snapshot.val() || [];
+    return list[index];
   });
 }
 
