@@ -257,7 +257,7 @@ function addDangVien() {
 
   // Tạo đối tượng đảng viên mới với các trường có thể để trống
   const newDV = {
-    name: name, 
+    name: name,
     gender: '',
     dob: '',
     ngayVaoDang: '',
@@ -274,7 +274,10 @@ function addDangVien() {
 }
 
 function editDV(index) {
-  const dv = getByDuyIndex(index);  // Hàm lấy thông tin đảng viên tại index
+  // Lấy dữ liệu đảng viên cũ
+  const dv = currentChiBoData[index];
+
+  // Sửa các trường thông tin của đảng viên
   const name = prompt("Cập nhật tên đảng viên:", dv.name);
   const gender = prompt("Cập nhật giới tính:", dv.gender);
   const dob = prompt("Cập nhật ngày sinh:", dv.dob);
@@ -300,8 +303,8 @@ function editDV(index) {
 function updateDVInDB(index, updatedDV) {
   db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
-    list[index] = updatedDV;
-    db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable);
+    list[index] = updatedDV; // Cập nhật thông tin đảng viên
+    db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable); // Lưu lại và render bảng
   });
 }
 
