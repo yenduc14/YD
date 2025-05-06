@@ -219,18 +219,22 @@ function renderTable() {
     tbody.innerHTML = '';
     if (!Array.isArray(list)) return;
     list.forEach((dv, index) => {
-      if (!dv.name?.toLowerCase().includes(keyword)) return;
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${index + 1}</td><td>${dv.name}</td><td>${dv.gender}</td><td>${dv.dob}</td>
-        <td>${dv.ngayVaoDang}</td><td>${dv.chinhThuc}</td><td>${calcAge(dv.ngayVaoDang)}</td>
-        <td>${dv.huyHieu || ''}</td><td>${dv.note || ''}</td>
-        <td>
-          <button class="action-btn" onclick="editDV(${index})">✏️</button>
-          <button class="action-btn delete-btn" onclick="deleteDV(${index})">🗑️</button>
-        </td>`;
-      tbody.appendChild(tr);
-    });
+  if (!dv.name?.toLowerCase().includes(keyword)) return;
+  const tuoiDangStr = calcAge(dv.ngayVaoDang);
+  const highlight = shouldHighlight(dv.ngayVaoDang);
+  const nameCell = highlight ? `<span style="color:red; font-weight:bold;">${dv.name}</span>` : dv.name;
+
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td>${index + 1}</td><td>${nameCell}</td><td>${dv.gender}</td><td>${dv.dob}</td>
+    <td>${dv.ngayVaoDang}</td><td>${dv.chinhThuc}</td><td>${tuoiDangStr}</td>
+    <td>${dv.huyHieu || ''}</td><td>${dv.note || ''}</td>
+    <td>
+      <button class="action-btn" onclick="editDV(${index})">✏️</button>
+      <button class="action-btn delete-btn" onclick="deleteDV(${index})">🗑️</button>
+    </td>`;
+  tbody.appendChild(tr);
+});
   });
 }
 
@@ -288,6 +292,37 @@ function calcAge(dateStr) {
   } catch (err) {
     console.error("Lỗi tính tuổi Đảng:", err);
     return '';
+  }
+}
+function shouldHighlight(dateStr) {
+  try {
+    const parts = dateStr.split("/");
+    if (parts.length !== 3) return false;
+    const joinDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+    const now = new Date();
+    const anniversaries = [
+      [3, 2], [19, 5], [2, 9], [7, 11]
+    ];
+    const milestones = [30, 40, 45, 50, 55, 60, 65, 70];
+
+    for (let [d, m] of anniversaries) {
+      const target = new Date(now.getFullYear(), m - 1, d);
+      const oneMonthBefore = new Date(target);
+      oneMonthBefore.setMonth(oneMonthBefore.getMonth() - 1);
+      if (now >= oneMonthBefore && now <= target) {
+        let years = target.getFullYear() - joinDate.getFullYear();
+        if (
+          target.getMonth() < joinDate.getMonth() ||
+          (target.getMonth() === joinDate.getMonth() && target.getDate() < joinDate.getDate())
+        ) {
+          years--;
+        }
+        if (milestones.includes(years)) return true;
+      }
+    }
+    return false;
+  } catch {
+    return false;
   }
 }
 
