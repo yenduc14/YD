@@ -368,18 +368,19 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
       // Bỏ duy nhất dòng tiêu đề đầu tiên
 function excelDateToString(serial) {
   if (typeof serial === 'number') {
-    const utc_days = Math.floor(serial - 25569);
-    const utc_value = utc_days * 86400;
-    const date_info = new Date(utc_value * 1000);
+    const utc_days = Math.floor(serial - 25569);  // Sửa lại giá trị 25569 cho chuẩn Excel
+    const utc_value = utc_days * 86400;  // Chuyển đổi thành giây
+    const date_info = new Date(utc_value * 1000);  // Chuyển giây thành Date object
     const day = String(date_info.getDate()).padStart(2, '0');
     const month = String(date_info.getMonth() + 1).padStart(2, '0');
     const year = date_info.getFullYear();
     return `${day}/${month}/${year}`;
   } else if (typeof serial === 'string') {
-    return serial.trim(); // đã là dạng chuỗi thì giữ nguyên
+    return serial.trim(); // nếu là chuỗi thì giữ nguyên
   }
-  return '';
+  return ''; // trả về nếu không phải kiểu số hoặc chuỗi
 }
+
 const convert = rows.slice(2).map(r => ({
   name: r[1] || '',
   gender: r[2]?.toLowerCase() === 'x' ? 'Nữ' : (r[2]?.toLowerCase() === 'y' ? 'Nam' : ''),
