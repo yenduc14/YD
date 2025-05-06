@@ -8,6 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
     body { font-family: Arial; background: #f4f4f4; margin: 0; padding: 0; }
     .container { max-width: 1000px; margin: 20px auto; background: #fff; padding: 20px; border-radius: 8px; }
@@ -96,6 +97,28 @@ window.onload = () => {
   if (!localStorage.getItem(USERS_KEY)) {
     localStorage.setItem(USERS_KEY, JSON.stringify(defaultUsers));
   }
+
+  // Kích hoạt kéo thả với SortableJS
+  new Sortable(document.getElementById('dvTableBody'), {
+    animation: 150,
+    onEnd: function (evt) {
+      const newList = [];
+      document.querySelectorAll('#dvTableBody tr').forEach(tr => {
+        const cells = tr.querySelectorAll('td');
+        newList.push({
+          name: cells[1].innerText,
+          gender: cells[2].innerText,
+          dob: cells[3].innerText,
+          ngayVaoDang: cells[4].innerText,
+          chinhThuc: cells[5].innerText,
+          tuoiDang: cells[6].innerText,
+          huyHieu: cells[7].innerText,
+          note: cells[8].innerText
+        });
+      });
+      db.ref(`chibo_data/${currentChiBo}`).set(newList).then(renderTable);
+    }
+  });
 };
 
 function login() {
