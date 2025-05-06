@@ -297,43 +297,42 @@ function calcAge(dateStr) {
     return '';
   }
 }
-function shouldHighlight(dateStr) {
+function shouldHighlight(ngayVaoDangStr) {
+  const milestones = [30, 40, 45, 50, 55, 60, 65, 70];
+  const leDates = [
+    { day: 3, month: 2 },
+    { day: 19, month: 5 },
+    { day: 2, month: 9 },
+    { day: 7, month: 11 }
+  ];
+
   try {
-    const parts = dateStr.split("/");
+    const parts = ngayVaoDangStr.split("/");
     if (parts.length !== 3) return false;
+
     const joinDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
     const now = new Date();
-    const milestones = [30, 40, 45, 50, 55, 60, 65, 70];
-    const specialDates = [
-      { day: 3, month: 2 },
-      { day: 19, month: 5 },
-      { day: 2, month: 9 },
-      { day: 7, month: 11 }
-    ];
 
-    for (let { day, month } of specialDates) {
-      const currentYear = now.getFullYear();
-      const eventDate = new Date(currentYear, month - 1, day);
-      const startHighlight = new Date(eventDate);
-      startHighlight.setMonth(startHighlight.getMonth() - 1);
+    for (const milestone of milestones) {
+      const targetYear = joinDate.getFullYear() + milestone;
 
-      if (now >= startHighlight && now <= eventDate) {
-        const years = currentYear - joinDate.getFullYear();
-        const joinMonth = joinDate.getMonth();
-        const joinDay = joinDate.getDate();
+      for (const { day, month } of leDates) {
+        const eventDate = new Date(targetYear, month - 1, day);
+        const startAlert = new Date(eventDate);
+        startAlert.setMonth(eventDate.getMonth() - 1); // Trước 1 tháng
 
-        if (
-          (joinMonth < month - 1 || (joinMonth === month - 1 && joinDay <= day)) &&
-          milestones.includes(years)
-        ) {
+        // Nếu trong khoảng từ 1 tháng trước đến đúng ngày lễ => báo đỏ
+        if (now >= startAlert && now <= eventDate) {
           return true;
         }
       }
     }
-    return false;
-  } catch (err) {
-    return false;
+  } catch (e) {
+    console.error("Lỗi shouldHighlight:", e);
   }
+
+  return false;
+}
 }
 
 function exportExcel() {
