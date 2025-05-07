@@ -29,8 +29,8 @@
 <div style="display: flex; justify-content: center; align-items: center; position: relative;">
   <img src="codang.png" style="position: absolute; right: 20px; top: 0; height: 80px; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" />
   <div style="text-align: center; color: #007bff;">
-    <h1 style="margin-bottom: 0;">ĐẢNG CỘNG SẢN VIỆT NAM</h1>
-    <h2 style="margin-top: 5px;">ĐẢNG BỘ PHƯỜNG YÊN ĐỨC</h2>
+    <h1 style="margin-bottom: 0;">Đảng Cộng Sản Việt Nam</h1>
+    <h2 style="margin-top: 5px;">Đảng Bộ Phường Yên Đức</h2>
   </div>
 </div>
 
@@ -54,9 +54,9 @@
     <h2 id="chiBoTitle"></h2>
     <button class="btn" onclick="backToList()">← Quay lại</button>
     <input id="searchInput" placeholder="🔍 Tìm kiếm..." oninput="renderTable()"/>
-    <button class="btn" onclick="document.getElementById('excelFile').click()">📥 Nhập Excel</button>
+    <button class="btn" onclick="document.getElementById('excelFile').click()">📅 Nhập Excel</button>
     <input type="file" id="excelFile" accept=".xlsx,.xls" class="hidden" />
-    <button class="btn" onclick="exportExcel()">📤 Xuất Excel</button>
+    <button class="btn" onclick="exportExcel()">📄 Xuất Excel</button>
     <table>
       <thead>
         <tr>
@@ -72,6 +72,15 @@
 </div>
 
 <script>
+const USERS_KEY = 'users';
+const defaultUsers = [
+  { email: 'admin@gmail.com', password: 'admin123', role: 'admin' },
+  { email: 'user@gmail.com', password: 'user123', role: 'user' }
+];
+
+let currentUser = null;
+let currentChiBo = null;
+
 const firebaseConfig = {
   apiKey: "AIzaSyBm2sbTD9yOOoySCkTTw8dQbTx1JKvFX6E",
   authDomain: "quanlydangvien-856fe.firebaseapp.com",
@@ -84,56 +93,41 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-const USERS_KEY = 'users';
-let currentUser = null;
-let currentChiBo = null;
-
-const defaultUsers = [
-  { email: 'admin@gmail.com', password: 'admin123', role: 'admin' },
-  { email: 'user@gmail.com', password: 'user123', role: 'user' }
-];
-
 window.onload = () => {
-  if (!localStorage.getItem(USERS_KEY)) {
+  const existingUsers = JSON.parse(localStorage.getItem(USERS_KEY));
+  if (!existingUsers || !Array.isArray(existingUsers) || !existingUsers.find(u => u.email === 'admin@gmail.com')) {
     localStorage.setItem(USERS_KEY, JSON.stringify(defaultUsers));
+    console.log("Đã khởi tạo lại danh sách người dùng mặc định");
   }
-
-  // Kích hoạt kéo thả với SortableJS
-  new Sortable(document.getElementById('dvTableBody'), {
-    animation: 150,
-    onEnd: function (evt) {
-      const newList = [];
-      document.querySelectorAll('#dvTableBody tr').forEach(tr => {
-        const cells = tr.querySelectorAll('td');
-        newList.push({
-          name: cells[1].innerText,
-          gender: cells[2].innerText,
-          dob: cells[3].innerText,
-          ngayVaoDang: cells[4].innerText,
-          chinhThuc: cells[5].innerText,
-          tuoiDang: cells[6].innerText,
-          huyHieu: cells[7].innerText,
-          note: cells[8].innerText
-        });
-      });
-      db.ref(`chibo_data/${currentChiBo}`).set(newList).then(renderTable);
-    }
-  });
 };
 
 function login() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value.trim();
   const users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+  console.log("Tài khoản hiện có:", users);
+
   const found = users.find(u => u.email === email && u.password === password);
   if (found) {
     currentUser = found;
     document.getElementById("loginSection").classList.add("hidden");
     document.getElementById("mainSection").classList.remove("hidden");
+
+    if (currentUser.role !== 'admin') {
+      document.getElementById("newChiBo").style.display = "none";
+      const addBtn = document.querySelector('button[onclick="addChiBo()"]');
+      if (addBtn) addBtn.style.display = "none";
+    }
+
     renderChiBoList();
   } else {
     alert("Sai tài khoản hoặc mật khẩu.");
   }
+}
+
+function renderChiBoList() {
+  console.log("Hàm renderChiBoList được gọi — vui lòng bổ sung nội dung xử lý nếu cần.");
+  // Hiện tại placeholder. Bạn có thể viết nội dung load dữ liệu chi bộ tại đây.
 }
 
 function logout() {
@@ -202,6 +196,11 @@ function openChiBo(name) {
   document.getElementById("mainSection").classList.add("hidden");
   document.getElementById("chiBoDetail").classList.remove("hidden");
   document.getElementById("chiBoTitle").innerText = "Chi bộ: " + name;
+if (currentUser.role !== 'admin') {
+    document.getElementById("excelFile").style.display = "none";
+    document.querySelector('button[onclick="exportExcel()"]')?.style.display = "none";
+    document.querySelector('button[onclick="addDangVien()"]')?.style.display = "none";
+  }
   renderTable();
 }
 
@@ -219,46 +218,136 @@ function renderTable() {
     tbody.innerHTML = '';
     if (!Array.isArray(list)) return;
     list.forEach((dv, index) => {
-  if (!dv.name?.toLowerCase().includes(keyword)) return;
-  const tuoiDangStr = calcAge(dv.ngayVaoDang);
-  const highlight = shouldHighlight(dv.ngayVaoDang);
-  const nameCell = highlight ? `<span style="color:red; font-weight:bold;">${dv.name}</span>` : dv.name;
+      if (!dv.name?.toLowerCase().includes(keyword)) return;
 
- const tr = document.createElement("tr");
-if (shouldHighlight(dv.ngayVaoDang)) {
-  tr.style.color = "red";
-}
-  tr.innerHTML = `
-    <td>${index + 1}</td><td>${nameCell}</td><td>${dv.gender}</td><td>${dv.dob}</td>
-    <td>${dv.ngayVaoDang}</td><td>${dv.chinhThuc}</td><td>${tuoiDangStr}</td>
-    <td>${dv.huyHieu || ''}</td><td>${dv.note || ''}</td>
-    <td>
-      <button class="action-btn" onclick="editDV(${index})">✏️</button>
-      <button class="action-btn delete-btn" onclick="deleteDV(${index})">🗑️</button>
-    </td>`;
-  tbody.appendChild(tr);
-});
-  });
-}
+      // Sử dụng hàm shouldHighlight để xác định nếu cần highlight
+      const highlight = shouldHighlight(dv.ngayVaoDang);
+      const nameCell = highlight ? `<span style="color:red; font-weight:bold;">${dv.name}</span>` : dv.name;
+      const tuoiDangStr = calcAge(dv.ngayVaoDang);
+
+      const tr = document.createElement("tr");
+      if (highlight) {
+        tr.style.color = "red"; // Áp dụng màu đỏ cho dòng khi tròn tuổi Đảng
+      }
+
+      tr.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${nameCell}</td>
+        <td>${dv.gender}</td>
+        <td>${dv.dob}</td>
+        <td>${dv.ngayVaoDang}</td>
+        <td>${dv.chinhThuc}</td>
+        <td>${tuoiDangStr}</td>
+        <td>${dv.huyHieu || ''}</td>
+        <td>${dv.note || ''}</td>
+        <td>
+         ${currentUser?.role === 'admin' ? `
+            <button class="action-btn" onclick="editDV(${index})">✏️</button>
+            <button class="action-btn delete-btn" onclick="deleteDV(${index})">🗑️</button>
+          ` : ''}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // Chỉ kích hoạt Sortable nếu là admin
+    if (currentUser?.role === 'admin') {
+      new Sortable(document.getElementById('dvTableBody'), {
+        animation: 150,
+        onEnd: function (evt) {
+          const newList = [];
+          document.querySelectorAll('#dvTableBody tr').forEach(tr => {
+            const cells = tr.querySelectorAll('td');
+            newList.push({
+              name: cells[1].innerText,
+              gender: cells[2].innerText,
+              dob: cells[3].innerText,
+              ngayVaoDang: cells[4].innerText,
+              chinhThuc: cells[5].innerText,
+              tuoiDang: cells[6].innerText,
+              huyHieu: cells[7].innerText,
+              note: cells[8].innerText
+            });
+          });
+          db.ref(`chibo_data/${currentChiBo}`).set(newList).then(renderTable);
+        }
+      });
 
 function addDangVien() {
   const name = prompt("Tên đảng viên:");
-  if (!name) return;
-  const newDV = { name, gender: '', dob: '', ngayVaoDang: '', chinhThuc: '', huyHieu: '', note: '' };
+  if (name === null || name.trim() === "") return;
+
+  const gender = prompt("Giới tính (Nam/Nữ):") || "";
+  const dob = prompt("Ngày sinh (dd/mm/yyyy):") || "";
+  const ngayVaoDang = prompt("Ngày vào Đảng (dd/mm/yyyy):") || "";
+  const chinhThuc = prompt("Ngày chính thức (dd/mm/yyyy):") || "";
+  const huyHieu = prompt("Huy hiệu:") || "";
+  const note = prompt("Ghi chú:") || "";
+
+  const newDV = {
+    name: name.trim(),
+    gender: gender.trim(),
+    dob: dob.trim(),
+    ngayVaoDang: ngayVaoDang.trim(),
+    chinhThuc: chinhThuc.trim(),
+    huyHieu: huyHieu.trim(),
+    note: note.trim()
+  };
+
+  // Lấy danh sách đảng viên từ Firebase
   db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
-    list.push(newDV);
+    list.push(newDV); // Thêm đảng viên mới vào danh sách
+
+    // Cập nhật danh sách lên Firebase và render lại bảng
     db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable);
   });
 }
 
 function editDV(index) {
-  const newNote = prompt("Cập nhật ghi chú:");
-  if (newNote === null) return;
+  // Lấy dữ liệu chi bộ hiện tại
   db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
-    list[index].note = newNote;
-    db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable);
+    const dv = list[index];  // Đảng viên cần sửa
+
+    // Tiến hành sửa thông tin đảng viên
+    const name = prompt("Cập nhật tên đảng viên:", dv.name);
+    const gender = prompt("Cập nhật giới tính:", dv.gender);
+    const dob = prompt("Cập nhật ngày sinh:", dv.dob);
+    const ngayVaoDang = prompt("Cập nhật ngày vào Đảng:", dv.ngayVaoDang);
+    const huyHieu = prompt("Cập nhật huy hiệu:", dv.huyHieu);
+    const note = prompt("Cập nhật ghi chú:", dv.note);
+
+    // Kiểm tra điều kiện nhập liệu
+    if (name != null && gender != null && dob != null && ngayVaoDang != null && huyHieu != null && note != null) {
+      const updatedDV = {
+        name: name || dv.name,
+        gender: gender || dv.gender,
+        dob: dob || dv.dob,
+        ngayVaoDang: ngayVaoDang || dv.ngayVaoDang,
+        huyHieu: huyHieu || dv.huyHieu,
+        note: note || dv.note
+      };
+
+      // Cập nhật lại danh sách vào Firebase
+      list[index] = updatedDV; // Cập nhật đảng viên
+      db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable); // Cập nhật Firebase và render lại bảng
+    }
+  });
+}
+
+function updateDVInDB(index, updatedDV) {
+  db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
+    const list = snapshot.val() || [];
+    list[index] = updatedDV; // Cập nhật thông tin đảng viên
+    db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable); // Lưu lại và render bảng
+  });
+}
+
+function getDVByIndex(index) {
+  db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
+    const list = snapshot.val() || [];
+    return list[index];
   });
 }
 
@@ -366,26 +455,27 @@ document.getElementById("excelFile").addEventListener("change", function(e) {
       const rows = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: ""});  // header:1 để giữ mảng dòng, defval để tránh undefined
 
       // Bỏ duy nhất dòng tiêu đề đầu tiên
+      
 function excelDateToString(serial) {
   if (typeof serial === 'number') {
-    const utc_days = Math.floor(serial - 25569);  // Sửa lại giá trị 25569 cho chuẩn Excel
+    const utc_days = Math.floor(serial - 25569);  // Điều chỉnh giá trị 25569 cho chuẩn ngày Excel
     const utc_value = utc_days * 86400;  // Chuyển đổi thành giây
-    const date_info = new Date(utc_value * 1000);  // Chuyển giây thành Date object
+    const date_info = new Date(utc_value * 1000);  // Chuyển đổi thành đối tượng Date trong JavaScript
     const day = String(date_info.getDate()).padStart(2, '0');
     const month = String(date_info.getMonth() + 1).padStart(2, '0');
     const year = date_info.getFullYear();
     return `${day}/${month}/${year}`;  // Định dạng ngày theo kiểu dd/mm/yyyy
   } else if (typeof serial === 'string') {
-    return serial.trim();  // Nếu là chuỗi, giữ nguyên
+    return serial.trim();  // Nếu đã là chuỗi, chỉ cần cắt bỏ khoảng trắng
   }
-  return '';  // Trả về nếu không phải kiểu số hoặc chuỗi
+  return '';  // Trả về chuỗi rỗng nếu không phải kiểu số hoặc chuỗi
 }
 
 const convert = rows.slice(2).map(r => ({
   name: r[1] || '',
   gender: r[2]?.toLowerCase() === 'x' ? 'Nữ' : (r[2]?.toLowerCase() === 'y' ? 'Nam' : ''),
-  dob: r[3] || '',
-  ngayVaoDang: r[4] || '',
+  dob: excelDateToString(r[3]) || '',  // Áp dụng excelDateToString cho 'dob'
+  ngayVaoDang: excelDateToString(r[4]) || '',  // Áp dụng excelDateToString cho 'ngayVaoDang'
   chinhThuc: r[5] || '',
   tuoiDang: r[6] || '',
   huyHieu: r[7] || '',
@@ -405,11 +495,10 @@ const convert = rows.slice(2).map(r => ({
 function formatDate(date) {
   if (!date) return '';
   try {
-    // Kiểm tra nếu ngày có định dạng dd/mm/yyyy
     const parts = date.split('/');
     if (parts.length === 3) {
       const formattedDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-      return formattedDate.toLocaleDateString('vi-VN');
+      return formattedDate.toLocaleDateString('vi-VN');  // Đảm bảo ngày được định dạng là dd/mm/yyyy
     }
     return '';
   } catch (err) {
