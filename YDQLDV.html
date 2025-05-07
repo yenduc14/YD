@@ -94,8 +94,10 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 window.onload = () => {
-  if (!localStorage.getItem(USERS_KEY)) {
+  const existingUsers = JSON.parse(localStorage.getItem(USERS_KEY));
+  if (!existingUsers || !Array.isArray(existingUsers) || !existingUsers.find(u => u.email === 'admin@gmail.com')) {
     localStorage.setItem(USERS_KEY, JSON.stringify(defaultUsers));
+    console.log("Đã khởi tạo lại danh sách người dùng mặc định");
   }
 };
 
@@ -103,6 +105,8 @@ function login() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value.trim();
   const users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+  console.log("Tài khoản hiện có:", users);
+
   const found = users.find(u => u.email === email && u.password === password);
   if (found) {
     currentUser = found;
