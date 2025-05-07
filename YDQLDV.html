@@ -130,6 +130,10 @@ function login() {
     currentUser = found;
     document.getElementById("loginSection").classList.add("hidden");
     document.getElementById("mainSection").classList.remove("hidden");
+  if (currentUser.role !== 'admin') {
+      document.getElementById("newChiBo").style.display = "none";
+      document.querySelector('button[onclick="addChiBo()"]')?.style.display = "none";
+    }
     renderChiBoList();
   } else {
     alert("Sai tài khoản hoặc mật khẩu.");
@@ -202,6 +206,11 @@ function openChiBo(name) {
   document.getElementById("mainSection").classList.add("hidden");
   document.getElementById("chiBoDetail").classList.remove("hidden");
   document.getElementById("chiBoTitle").innerText = "Chi bộ: " + name;
+if (currentUser.role !== 'admin') {
+    document.getElementById("excelFile").style.display = "none";
+    document.querySelector('button[onclick="exportExcel()"]')?.style.display = "none";
+    document.querySelector('button[onclick="addDangVien()"]')?.style.display = "none";
+  }
   renderTable();
 }
 
@@ -242,12 +251,38 @@ function renderTable() {
         <td>${dv.huyHieu || ''}</td>
         <td>${dv.note || ''}</td>
         <td>
-          <button class="action-btn" onclick="editDV(${index})">✏️</button>
-          <button class="action-btn delete-btn" onclick="deleteDV(${index})">🗑️</button>
+         ${currentUser?.role === 'admin' ? `
+            <button class="action-btn" onclick="editDV(${index})">✏️</button>
+            <button class="action-btn delete-btn" onclick="deleteDV(${index})">🗑️</button>
+          ` : ''}
         </td>
       `;
       tbody.appendChild(tr);
     });
+
+    // Chỉ kích hoạt Sortable nếu là admin
+    if (currentUser?.role === 'admin') {
+      new Sortable(document.getElementById('dvTableBody'), {
+        animation: 150,
+        onEnd: function (evt) {
+          const newList = [];
+          document.querySelectorAll('#dvTableBody tr').forEach(tr => {
+            const cells = tr.querySelectorAll('td');
+            newList.push({
+              name: cells[1].innerText,
+              gender: cells[2].innerText,
+              dob: cells[3].innerText,
+              ngayVaoDang: cells[4].innerText,
+              chinhThuc: cells[5].innerText,
+              tuoiDang: cells[6].innerText,
+              huyHieu: cells[7].innerText,
+              note: cells[8].innerText
+            });
+          });
+          db.ref(`chibo_data/${currentChiBo}`).set(newList).then(renderTable);
+        }
+      });
+    }
   });
 }
 
