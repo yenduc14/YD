@@ -29,8 +29,8 @@
 <div style="display: flex; justify-content: center; align-items: center; position: relative;">
   <img src="codang.png" style="position: absolute; right: 20px; top: 0; height: 80px; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" />
   <div style="text-align: center; color: #007bff;">
-    <h1 style="margin-bottom: 0;">ĐẢNG CỘNG SẢN VIỆT NAM</h1>
-    <h2 style="margin-top: 5px;">ĐẢNG BỘ PHƯỜNG YÊN ĐỨC</h2>
+    <h1 style="margin-bottom: 0;">Đảng Cộng Sản Việt Nam</h1>
+    <h2 style="margin-top: 5px;">Đảng Bộ Phường Yên Đức</h2>
   </div>
 </div>
 
@@ -54,9 +54,9 @@
     <h2 id="chiBoTitle"></h2>
     <button class="btn" onclick="backToList()">← Quay lại</button>
     <input id="searchInput" placeholder="🔍 Tìm kiếm..." oninput="renderTable()"/>
-    <button class="btn" onclick="document.getElementById('excelFile').click()">📥 Nhập Excel</button>
+    <button class="btn" onclick="document.getElementById('excelFile').click()">📅 Nhập Excel</button>
     <input type="file" id="excelFile" accept=".xlsx,.xls" class="hidden" />
-    <button class="btn" onclick="exportExcel()">📤 Xuất Excel</button>
+    <button class="btn" onclick="exportExcel()">📄 Xuất Excel</button>
     <table>
       <thead>
         <tr>
@@ -72,6 +72,15 @@
 </div>
 
 <script>
+const USERS_KEY = 'users';
+const defaultUsers = [
+  { email: 'admin@gmail.com', password: 'admin123', role: 'admin' },
+  { email: 'user@gmail.com', password: 'user123', role: 'user' }
+];
+
+let currentUser = null;
+let currentChiBo = null;
+
 const firebaseConfig = {
   apiKey: "AIzaSyBm2sbTD9yOOoySCkTTw8dQbTx1JKvFX6E",
   authDomain: "quanlydangvien-856fe.firebaseapp.com",
@@ -84,37 +93,22 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-const USERS_KEY = 'users';
-let currentUser = null;
-let currentChiBo = null;
-
-const defaultUsers = [
-  { email: 'admin@gmail.com', password: 'admin123', role: 'admin' },
-  { email: 'user@gmail.com', password: 'user123', role: 'user' }
-];
-
 window.onload = () => {
-  // Khởi tạo danh sách người dùng nếu chưa có
   if (!localStorage.getItem(USERS_KEY)) {
     localStorage.setItem(USERS_KEY, JSON.stringify(defaultUsers));
   }
-
-  // KHÔNG kích hoạt Sortable ở đây, vì đã xử lý đúng quyền trong renderTable()
 };
 
 function login() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value.trim();
   const users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
-
   const found = users.find(u => u.email === email && u.password === password);
-
   if (found) {
     currentUser = found;
     document.getElementById("loginSection").classList.add("hidden");
     document.getElementById("mainSection").classList.remove("hidden");
 
-    // Ẩn chức năng nếu là người dùng thường
     if (currentUser.role !== 'admin') {
       document.getElementById("newChiBo").style.display = "none";
       const addBtn = document.querySelector('button[onclick="addChiBo()"]');
