@@ -253,16 +253,23 @@ function renderTable() {
 
 function addDangVien() {
   const name = prompt("Tên đảng viên:");
-  if (!name) return; // Nếu không nhập tên thì thoát hàm
+  if (name === null || name.trim() === "") return;
 
-  // Tạo đối tượng đảng viên mới với các trường có thể để trống
+  const gender = prompt("Giới tính (Nam/Nữ):") || "";
+  const dob = prompt("Ngày sinh (dd/mm/yyyy):") || "";
+  const ngayVaoDang = prompt("Ngày vào Đảng (dd/mm/yyyy):") || "";
+  const chinhThuc = prompt("Ngày chính thức (dd/mm/yyyy):") || "";
+  const huyHieu = prompt("Huy hiệu:") || "";
+  const note = prompt("Ghi chú:") || "";
+
   const newDV = {
-    name: name,
-    gender: '',
-    dob: '',
-    ngayVaoDang: '',
-    huyHieu: '',
-    note: ''
+    name: name.trim(),
+    gender: gender.trim(),
+    dob: dob.trim(),
+    ngayVaoDang: ngayVaoDang.trim(),
+    chinhThuc: chinhThuc.trim(),
+    huyHieu: huyHieu.trim(),
+    note: note.trim()
   };
 
   // Lấy danh sách đảng viên từ Firebase
