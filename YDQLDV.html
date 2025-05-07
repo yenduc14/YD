@@ -107,14 +107,19 @@ function login() {
   const password = document.getElementById("password").value.trim();
   const users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
   const found = users.find(u => u.email === email && u.password === password);
+
   if (found) {
     currentUser = found;
     document.getElementById("loginSection").classList.add("hidden");
     document.getElementById("mainSection").classList.remove("hidden");
-  if (currentUser.role !== 'admin') {
+
+    // ✅ Sửa ở đây: thêm dấu ngoặc cho if
+    if (currentUser.role !== 'admin') {
       document.getElementById("newChiBo").style.display = "none";
-      document.querySelector('button[onclick="addChiBo()"]')?.style.display = "none";
+      const addBtn = document.querySelector('button[onclick="addChiBo()"]');
+      if (addBtn) addBtn.style.display = "none";
     }
+
     renderChiBoList();
   } else {
     alert("Sai tài khoản hoặc mật khẩu.");
