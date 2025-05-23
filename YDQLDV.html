@@ -29,8 +29,8 @@
 <div style="display: flex; justify-content: center; align-items: center; position: relative;">
   <img src="codang.png" style="position: absolute; right: 20px; top: 0; height: 80px; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" />
   <div style="text-align: center; color: #007bff;">
-    <h1 style="margin-bottom: 0;">ĐẢNG CỘNG SẢN VIỆT NAM</h1>
-    <h2 style="margin-top: 5px;">ĐẢNG BỘ PHƯỜNG YÊN ĐỨC</h2>
+    <h1 style="margin-bottom: 0;">Đảng Cộng Sản Việt Nam</h1>
+    <h2 style="margin-top: 5px;">Đảng Bộ Phường Yên Đức</h2>
   </div>
 </div>
 
@@ -54,9 +54,9 @@
     <h2 id="chiBoTitle"></h2>
     <button class="btn" onclick="backToList()">← Quay lại</button>
     <input id="searchInput" placeholder="🔍 Tìm kiếm..." oninput="renderTable()"/>
-    <button class="btn" onclick="document.getElementById('excelFile').click()">📥 Nhập Excel</button>
+    <button class="btn" onclick="document.getElementById('excelFile').click()">📅 Nhập Excel</button>
     <input type="file" id="excelFile" accept=".xlsx,.xls" class="hidden" />
-    <button class="btn" onclick="exportExcel()">📤 Xuất Excel</button>
+    <button class="btn" onclick="exportExcel()">📄 Xuất Excel</button>
     <table>
       <thead>
         <tr>
@@ -72,6 +72,15 @@
 </div>
 
 <script>
+const USERS_KEY = 'users';
+const defaultUsers = [
+  { email: 'admin@gmail.com', password: 'admin123', role: 'admin' },
+  { email: 'user@gmail.com', password: 'user123', role: 'user' }
+];
+
+let currentUser = null;
+let currentChiBo = null;
+
 const firebaseConfig = {
   apiKey: "AIzaSyBm2sbTD9yOOoySCkTTw8dQbTx1JKvFX6E",
   authDomain: "quanlydangvien-856fe.firebaseapp.com",
@@ -84,52 +93,30 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-const USERS_KEY = 'users';
-let currentUser = null;
-let currentChiBo = null;
-
-const defaultUsers = [
-  { email: 'admin@gmail.com', password: 'admin123', role: 'admin' },
-  { email: 'user@gmail.com', password: 'user123', role: 'user' }
-];
-
 window.onload = () => {
-  if (!localStorage.getItem(USERS_KEY)) {
+  const existingUsers = JSON.parse(localStorage.getItem(USERS_KEY));
+ if (!existingUsers || !Array.isArray(existingUsers) || !existingUsers.find(u => u.email === 'admin@gmail.com') || !existingUsers.find(u => u.email === 'user@gmail.com')) {
     localStorage.setItem(USERS_KEY, JSON.stringify(defaultUsers));
+    console.log("Đã khởi tạo lại danh sách người dùng mặc định");
   }
-
-  // Kích hoạt kéo thả với SortableJS
-  new Sortable(document.getElementById('dvTableBody'), {
-    animation: 150,
-    onEnd: function (evt) {
-      const newList = [];
-      document.querySelectorAll('#dvTableBody tr').forEach(tr => {
-        const cells = tr.querySelectorAll('td');
-        newList.push({
-          name: cells[1].innerText,
-          gender: cells[2].innerText,
-          dob: cells[3].innerText,
-          ngayVaoDang: cells[4].innerText,
-          chinhThuc: cells[5].innerText,
-          tuoiDang: cells[6].innerText,
-          huyHieu: cells[7].innerText,
-          note: cells[8].innerText
-        });
-      });
-      db.ref(`chibo_data/${currentChiBo}`).set(newList).then(renderTable);
-    }
-  });
+  // Khi load trang, reset giao diện ẩn các nút chức năng admin
+  resetUI();
 };
 
 function login() {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value.trim();
   const users = JSON.parse(localStorage.getItem(USERS_KEY)) || [];
+
   const found = users.find(u => u.email === email && u.password === password);
   if (found) {
-    currentUser = found;
+    currentUser = { email: found.email, role: found.role }; // không lưu password
+    localStorage.setItem('currentUserRole', currentUser.role);
+
     document.getElementById("loginSection").classList.add("hidden");
     document.getElementById("mainSection").classList.remove("hidden");
+
+    updateUIByRole(currentUser.role);
     renderChiBoList();
   } else {
     alert("Sai tài khoản hoặc mật khẩu.");
@@ -139,9 +126,42 @@ function login() {
 function logout() {
   currentUser = null;
   currentChiBo = null;
+  localStorage.removeItem('currentUserRole');
+
   document.getElementById("mainSection").classList.add("hidden");
   document.getElementById("chiBoDetail").classList.add("hidden");
   document.getElementById("loginSection").classList.remove("hidden");
+
+  resetUI();
+}
+
+function resetUI() {
+  // Ẩn hết các nút chức năng admin
+  document.getElementById("newChiBo").style.display = "none";
+  const addBtn = document.querySelector('button[onclick="addChiBo()"]');
+  if (addBtn) addBtn.style.display = "none";
+
+  document.getElementById("excelFile").style.display = "none";
+  const exportBtn = document.querySelector('button[onclick="exportExcel()"]');
+  if (exportBtn) exportBtn.style.display = "none";
+  const addDVBtn = document.querySelector('button[onclick="addDangVien()"]');
+  if (addDVBtn) addDVBtn.style.display = "none";
+}
+
+function updateUIByRole(role) {
+  if (role === 'admin') {
+    document.getElementById("newChiBo").style.display = "inline-block";
+    const addBtn = document.querySelector('button[onclick="addChiBo()"]');
+    if (addBtn) addBtn.style.display = "inline-block";
+
+    document.getElementById("excelFile").style.display = "inline-block";
+    const exportBtn = document.querySelector('button[onclick="exportExcel()"]');
+    if (exportBtn) exportBtn.style.display = "inline-block";
+    const addDVBtn = document.querySelector('button[onclick="addDangVien()"]');
+    if (addDVBtn) addDVBtn.style.display = "inline-block";
+  } else {
+    resetUI();
+  }
 }
 
 function renderChiBoList() {
@@ -156,41 +176,42 @@ function renderChiBoList() {
     }
     for (let name in data) {
       const li = document.createElement("li");
-      li.innerHTML = `<strong>${name}</strong> <button class="action-btn" onclick="openChiBo('${name}')">Mở</button> ${currentUser?.role === 'admin' ? `<button class="action-btn delete-btn" onclick="deleteChiBo('${name}')">Xoá</button>` : ''}`;
+      const role = localStorage.getItem('currentUserRole');
+      li.innerHTML = `<strong>${name}</strong> <button class="action-btn" onclick="openChiBo('${name}')">Mở</button> ${role === 'admin' ? `<button class="action-btn delete-btn" onclick="deleteChiBo('${name}')">Xoá</button>` : ''}`;
       ul.appendChild(li);
     }
   });
 }
 
- function addChiBo() {
-      const name = document.getElementById("newChiBo").value.trim();
-      if (!name) {
-        alert("Vui lòng nhập tên chi bộ.");
-        return;
-      }
+function addChiBo() {
+  const name = document.getElementById("newChiBo").value.trim();
+  if (!name) {
+    alert("Vui lòng nhập tên chi bộ.");
+    return;
+  }
 
-      const ref = db.ref("chibo_data/" + name);
-      ref.once("value")
-        .then(snapshot => {
-          if (snapshot.exists()) {
-            alert("Chi bộ đã tồn tại.");
-          } else {
-            ref.set({ createdAt: new Date().toISOString() })
-              .then(() => {
-                document.getElementById("newChiBo").value = "";
-                renderChiBoList();
-              })
-              .catch(err => {
-                console.error("Lỗi khi thêm chi bộ:", err);
-                alert("Lỗi khi thêm chi bộ. Xem console.");
-              });
-          }
-        })
-        .catch(err => {
-          console.error("Lỗi kiểm tra chi bộ:", err);
-          alert("Lỗi kiểm tra chi bộ. Xem console.");
-        });
-    }
+  const ref = db.ref("chibo_data/" + name);
+  ref.once("value")
+    .then(snapshot => {
+      if (snapshot.exists()) {
+        alert("Chi bộ đã tồn tại.");
+      } else {
+        ref.set({ createdAt: new Date().toISOString() })
+          .then(() => {
+            document.getElementById("newChiBo").value = "";
+            renderChiBoList();
+          })
+          .catch(err => {
+            console.error("Lỗi khi thêm chi bộ:", err);
+            alert("Lỗi khi thêm chi bộ. Xem console.");
+          });
+      }
+    })
+    .catch(err => {
+      console.error("Lỗi kiểm tra chi bộ:", err);
+      alert("Lỗi kiểm tra chi bộ. Xem console.");
+    });
+}
 
 function deleteChiBo(name) {
   if (!confirm(`Xóa chi bộ "${name}"?`)) return;
@@ -202,6 +223,23 @@ function openChiBo(name) {
   document.getElementById("mainSection").classList.add("hidden");
   document.getElementById("chiBoDetail").classList.remove("hidden");
   document.getElementById("chiBoTitle").innerText = "Chi bộ: " + name;
+
+  const role = localStorage.getItem('currentUserRole');
+  if (role !== 'admin') {
+    document.getElementById("excelFile").style.display = "none";
+    const exportBtn = document.querySelector('button[onclick="exportExcel()"]');
+    if (exportBtn) exportBtn.style.display = "none";
+    const addDVBtn = document.querySelector('button[onclick="addDangVien()"]');
+    if (addDVBtn) addDVBtn.style.display = "none";
+  } else {
+    // Hiện lại nếu là admin
+    document.getElementById("excelFile").style.display = "inline-block";
+    const exportBtn = document.querySelector('button[onclick="exportExcel()"]');
+    if (exportBtn) exportBtn.style.display = "inline-block";
+    const addDVBtn = document.querySelector('button[onclick="addDangVien()"]');
+    if (addDVBtn) addDVBtn.style.display = "inline-block";
+  }
+
   renderTable();
 }
 
@@ -214,12 +252,13 @@ function backToList() {
 function renderTable() {
   const tbody = document.getElementById("dvTableBody");
   const keyword = document.getElementById("searchInput").value.toLowerCase();
+  const role = localStorage.getItem('currentUserRole');
   db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
     tbody.innerHTML = '';
     if (!Array.isArray(list)) return;
     list.forEach((dv, index) => {
-  if (!dv.name?.toLowerCase().includes(keyword)) return;
+     if (!dv.name?.toLowerCase().includes(keyword)) return;
   const tuoiDangStr = calcAge(dv.ngayVaoDang);
   const highlight = shouldHighlight(dv.ngayVaoDang);
   const nameCell = highlight ? `<span style="color:red; font-weight:bold;">${dv.name}</span>` : dv.name;
@@ -228,19 +267,51 @@ function renderTable() {
 if (shouldHighlight(dv.ngayVaoDang)) {
   tr.style.color = "red";
 }
-  tr.innerHTML = `
-    <td>${index + 1}</td><td>${nameCell}</td><td>${dv.gender}</td><td>${dv.dob}</td>
-    <td>${dv.ngayVaoDang}</td><td>${dv.chinhThuc}</td><td>${tuoiDangStr}</td>
-    <td>${dv.huyHieu || ''}</td><td>${dv.note || ''}</td>
-    <td>
-      <button class="action-btn" onclick="editDV(${index})">✏️</button>
-      <button class="action-btn delete-btn" onclick="deleteDV(${index})">🗑️</button>
-    </td>`;
-  tbody.appendChild(tr);
-});
+
+      tr.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${nameCell}</td>
+        <td>${dv.gender}</td>
+        <td>${dv.dob}</td>
+        <td>${dv.ngayVaoDang}</td>
+        <td>${dv.chinhThuc}</td>
+        <td>${tuoiDangStr}</td>
+        <td>${dv.huyHieu || ''}</td>
+        <td>${dv.note || ''}</td>
+        <td>
+         ${role === 'admin' ? `
+            <button class="action-btn" onclick="editDV(${index})">✏️</button>
+            <button class="action-btn delete-btn" onclick="deleteDV(${index})">🗑️</button>
+          ` : ''}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    if (role === 'admin') {
+      new Sortable(document.getElementById('dvTableBody'), {
+        animation: 150,
+        onEnd: function (evt) {
+          const newList = [];
+          document.querySelectorAll('#dvTableBody tr').forEach(tr => {
+            const cells = tr.querySelectorAll('td');
+            newList.push({
+              name: cells[1].innerText,
+              gender: cells[2].innerText,
+              dob: cells[3].innerText,
+              ngayVaoDang: cells[4].innerText,
+              chinhThuc: cells[5].innerText,
+              tuoiDang: cells[6].innerText,
+              huyHieu: cells[7].innerText,
+              note: cells[8].innerText
+            });
+          });
+          db.ref(`chibo_data/${currentChiBo}`).set(newList).then(renderTable);
+        }
+      });
+    }
   });
 }
-
 function addDangVien() {
   const name = prompt("Tên đảng viên:");
   if (name === null || name.trim() === "") return;
@@ -273,36 +344,46 @@ function addDangVien() {
 }
 
 function editDV(index) {
-  // Lấy dữ liệu chi bộ hiện tại
   db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
-    const dv = list[index];  // Đảng viên cần sửa
+    const dv = list[index];
 
-    // Tiến hành sửa thông tin đảng viên
     const name = prompt("Cập nhật tên đảng viên:", dv.name);
+    if (name === null) return; // Bấm Cancel
+
     const gender = prompt("Cập nhật giới tính:", dv.gender);
+    if (gender === null) return;
+
     const dob = prompt("Cập nhật ngày sinh:", dv.dob);
+    if (dob === null) return;
+
     const ngayVaoDang = prompt("Cập nhật ngày vào Đảng:", dv.ngayVaoDang);
+    if (ngayVaoDang === null) return;
+
+    const chinhThuc = prompt("Cập nhật ngày chính thức:", dv.chinhThuc);
+    if (chinhThuc === null) return;
+
     const huyHieu = prompt("Cập nhật huy hiệu:", dv.huyHieu);
+    if (huyHieu === null) return;
+
     const note = prompt("Cập nhật ghi chú:", dv.note);
+    if (note === null) return;
 
-    // Kiểm tra điều kiện nhập liệu
-    if (name != null && gender != null && dob != null && ngayVaoDang != null && huyHieu != null && note != null) {
-      const updatedDV = {
-        name: name || dv.name,
-        gender: gender || dv.gender,
-        dob: dob || dv.dob,
-        ngayVaoDang: ngayVaoDang || dv.ngayVaoDang,
-        huyHieu: huyHieu || dv.huyHieu,
-        note: note || dv.note
-      };
+    const updatedDV = {
+      name: name,
+      gender: gender,
+      dob: dob,
+      ngayVaoDang: ngayVaoDang,
+      chinhThuc: chinhThuc,
+      huyHieu: huyHieu,
+      note: note
+    };
 
-      // Cập nhật lại danh sách vào Firebase
-      list[index] = updatedDV; // Cập nhật đảng viên
-      db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable); // Cập nhật Firebase và render lại bảng
-    }
+    list[index] = updatedDV;
+    db.ref(`chibo_data/${currentChiBo}`).set(list).then(renderTable);
   });
 }
+
 
 function deleteDV(index) {
   if (!confirm("Xoá đảng viên này?")) return;
