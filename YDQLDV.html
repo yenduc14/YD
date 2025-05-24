@@ -250,41 +250,46 @@ function backToList() {
 }
 
 function renderTable() {
-  const tbody = document.getElementById("dvTableBody");
+ const tbody = document.getElementById("dvTableBody");
   const keyword = document.getElementById("searchInput").value.toLowerCase();
   const role = localStorage.getItem('currentUserRole');
   db.ref(`chibo_data/${currentChiBo}`).once('value').then(snapshot => {
     const list = snapshot.val() || [];
     tbody.innerHTML = '';
     if (!Array.isArray(list)) return;
-    list.forEach((dv, index) => {
-     if (!dv.name?.toLowerCase().includes(keyword)) return;
+list.forEach((dv, index) => {
+      console.log(`Đảng viên ${index + 1}: ngày vào Đảng =`, dv.ngayVaoDang);
+ if (!dv.name?.toLowerCase().includes(keyword)) return;
   const tuoiDangStr = calcAge(dv.ngayVaoDang);
-  const highlight = shouldHighlight(dv.ngayVaoDang);
-  const nameCell = highlight ? `<span style="color:red; font-weight:bold;">${dv.name}</span>` : dv.name;
 
- const tr = document.createElement("tr");
-if (shouldHighlight(dv.ngayVaoDang)) {
-  tr.style.color = "red";
+  const highlight = shouldHighlight(dv.ngayVaoDang);
+
+const tr = document.createElement("tr");
+if (highlight) {
+  tr.style.backgroundColor = "#fdd";  // Thay vì chỉ màu chữ
 }
 
-      tr.innerHTML = `
-        <td>${index + 1}</td>
-        <td>${nameCell}</td>
-        <td>${dv.gender}</td>
-        <td>${dv.dob}</td>
-        <td>${dv.ngayVaoDang}</td>
-        <td>${dv.chinhThuc}</td>
-        <td>${tuoiDangStr}</td>
-        <td>${dv.huyHieu || ''}</td>
-        <td>${dv.note || ''}</td>
-        <td>
-         ${role === 'admin' ? `
-            <button class="action-btn" onclick="editDV(${index})">✏️</button>
-            <button class="action-btn delete-btn" onclick="deleteDV(${index})">🗑️</button>
-          ` : ''}
-        </td>
-      `;
+const nameCell = highlight
+  ? `<span style="color:red; font-weight:bold;">${dv.name}</span>`
+  : dv.name;
+
+tr.innerHTML = `
+  <td>${index + 1}</td>
+  <td>${nameCell}</td>
+  <td>${dv.gender}</td>
+  <td>${dv.dob}</td>
+  <td>${dv.ngayVaoDang}</td>
+  <td>${dv.chinhThuc}</td>
+  <td>${tuoiDangStr}</td>
+  <td>${dv.huyHieu || ''}</td>
+  <td>${dv.note || ''}</td>
+  <td>
+   ${role === 'admin' ? `
+      <button class="action-btn" onclick="editDV(${index})">✏️</button>
+      <button class="action-btn delete-btn" onclick="deleteDV(${index})">🗑️</button>
+    ` : ''}
+  </td>
+`;
       tbody.appendChild(tr);
     });
 
@@ -426,10 +431,12 @@ function shouldHighlight(ngayVaoDangStr) {
     { day: 3, month: 2 },
     { day: 19, month: 5 },
     { day: 2, month: 9 },
-    { day: 7, month: 11 }
-  ];
+    { day: 7, month: 11 },
+   ];
 
   try {
+    if (!ngayVaoDangStr) return false;
+
     const parts = ngayVaoDangStr.split("/");
     if (parts.length !== 3) return false;
 
@@ -441,10 +448,12 @@ function shouldHighlight(ngayVaoDangStr) {
 
       for (const { day, month } of leDates) {
         const eventDate = new Date(targetYear, month - 1, day);
-        const startAlert = new Date(eventDate);
-        startAlert.setMonth(eventDate.getMonth() - 1); // Trước 1 tháng
+        eventDate.setHours(23,59,59,999);
 
-        // Nếu trong khoảng từ 1 tháng trước đến đúng ngày lễ => báo đỏ
+        const startAlert = new Date(eventDate);
+        startAlert.setMonth(startAlert.getMonth() - 1);
+        startAlert.setHours(0,0,0,0);
+
         if (now >= startAlert && now <= eventDate) {
           return true;
         }
