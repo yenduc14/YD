@@ -29,8 +29,8 @@
 <div style="display: flex; justify-content: center; align-items: center; position: relative;">
   <img src="codang.png" style="position: absolute; right: 20px; top: 0; height: 80px; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);" />
   <div style="text-align: center; color: #007bff;">
-    <h1 style="margin-bottom: 0;">ĐẢNG CỘNG SẢN VIỆT NAM</h1>
-    <h2 style="margin-top: 5px;">ĐẢNG BỘ PHƯỜNG YÊN ĐỨC</h2>
+    <h1 style="margin-bottom: 0;">Đảng Cộng Sản Việt Nam</h1>
+    <h2 style="margin-top: 5px;">Đảng Bộ Phường Yên Đức</h2>
   </div>
 </div>
 
@@ -190,8 +190,12 @@ function renderChiBoList() {
     }
     for (let name in data) {
       const li = document.createElement("li");
-      const role = localStorage.getItem('currentUserRole');
-      li.innerHTML = `<strong>${name}</strong> <button class="action-btn" onclick="openChiBo('${name}')">Mở</button> ${role === 'admin' ? `<button class="action-btn delete-btn" onclick="deleteChiBo('${name}')">Xoá</button>` : ''}`;
+      li.innerHTML = `
+        <strong>${name}</strong> 
+        <button class="action-btn" onclick="openChiBo('${name}')">Mở</button>
+        <button class="action-btn" onclick="editChiBoName('${name}')">Sửa</button>
+        ${currentUser?.role === 'admin' ? `<button class="action-btn delete-btn" onclick="deleteChiBo('${name}')">Xoá</button>` : ''}
+      `;
       ul.appendChild(li);
     }
   });
@@ -225,6 +229,56 @@ function addChiBo() {
       console.error("Lỗi kiểm tra chi bộ:", err);
       alert("Lỗi kiểm tra chi bộ. Xem console.");
     });
+}
+
+function editChiBoName(oldName) {
+  const newName = prompt("Nhập tên chi bộ mới:", oldName);
+  if (!newName || newName.trim() === "" || newName === oldName) {
+    return; // Hủy hoặc không đổi gì
+  }
+
+  const trimmedNewName = newName.trim();
+
+  const oldRef = db.ref(`chibo_data/${oldName}`);
+  const newRef = db.ref(`chibo_data/${trimmedNewName}`);
+
+  // Kiểm tra chi bộ mới đã tồn tại chưa
+  newRef.once('value').then(snapshot => {
+    if (snapshot.exists()) {
+      alert("Tên chi bộ mới đã tồn tại. Vui lòng chọn tên khác.");
+      return;
+    }
+
+    // Lấy dữ liệu chi bộ cũ
+    oldRef.once('value').then(snapshot => {
+      const data = snapshot.val();
+      if (!data) {
+        alert("Chi bộ cũ không tồn tại hoặc đã bị xóa.");
+        return;
+      }
+
+      // Ghi dữ liệu vào chi bộ mới
+      newRef.set(data).then(() => {
+        // Xóa chi bộ cũ
+        oldRef.remove().then(() => {
+          alert("Đã cập nhật tên chi bộ thành công.");
+          renderChiBoList();
+        }).catch(err => {
+          console.error("Lỗi xóa chi bộ cũ:", err);
+          alert("Lỗi xóa chi bộ cũ. Kiểm tra console.");
+        });
+      }).catch(err => {
+        console.error("Lỗi cập nhật tên chi bộ:", err);
+        alert("Lỗi cập nhật tên chi bộ. Kiểm tra console.");
+      });
+    }).catch(err => {
+      console.error("Lỗi lấy dữ liệu chi bộ cũ:", err);
+      alert("Lỗi lấy dữ liệu chi bộ cũ. Kiểm tra console.");
+    });
+  }).catch(err => {
+    console.error("Lỗi kiểm tra tên chi bộ mới:", err);
+    alert("Lỗi kiểm tra tên chi bộ mới. Kiểm tra console.");
+  });
 }
 
 function deleteChiBo(name) {
